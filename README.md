@@ -6,7 +6,7 @@
 
 ## Usage
 
-The site [http://yacd.clash-plus.cf](http://yacd.clash-plus.cf) is served with HTTP not HTTPS is because many browsers block requests to HTTP resources from a HTTPS website. If you think it's not safe, you could just download the [zip of the gh-pages](https://github.com/yaling888/yacd/archive/gh-pages.zip), unzip and serve those static files with a web server(like Nginx).
+The site [http://yacd.eu.org](http://yacd.eu.org) is served with HTTP not HTTPS is because many browsers block requests to HTTP resources from a HTTPS website. If you think it's not safe, you could just download the [zip of the gh-pages](https://github.com/yaling888/yacd/archive/gh-pages.zip), unzip and serve those static files with a web server(like Nginx).
 
 **Supported URL query params**
 
@@ -25,7 +25,7 @@ The site [http://yacd.clash-plus.cf](http://yacd.clash-plus.cf) is served with H
 pnpm i
 
 # start the dev server
-# then go to http://127.0.0.1:3000
+# then go to the url printed on the screen
 pnpm start
 
 

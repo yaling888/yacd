@@ -21,8 +21,7 @@ export type ConnectionItem = {
     sourcePort: string;
     destinationPort: string;
     host: string;
-    process?: string;
-    processPath?: string;
+    processPath: string;
   };
   upload: number;
   download: number;
@@ -87,8 +86,4 @@ export async function closeConnById(apiConfig: ClashAPIConfig, id: string) {
   const { url: baseURL, init } = getURLAndInit(apiConfig);
   const url = `${baseURL}${endpoint}/${id}`;
   return await fetch(url, { ...init, method: 'DELETE' });
-}
-
-export function basePath (path: string) {
-  return path.replace(/.*[/\\]/, '')
 }

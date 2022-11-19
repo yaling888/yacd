@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.8](https://github.com/haishanh/yacd/compare/v0.3.7...v0.3.8) (2022-11-11)
+
+Fixed:
+
+- Compatible with backend that doesn't support processPath
+
+## [0.3.7](https://github.com/haishanh/yacd/compare/v0.3.6...v0.3.7) (2022-11-07)
+
+Added:
+
+- Add "Process" columns to connections
+- Add "theme-color" meta tags
+- Support labeling backends
+
+Changed:
+
+- Blended sidebar style
+
 ## [0.3.6](https://github.com/haishanh/yacd/compare/v0.3.5...v0.3.6) (2022-07-23)
 
 Changed:

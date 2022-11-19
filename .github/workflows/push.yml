@@ -2,7 +2,7 @@ on: [push]
 name: Deploy workflow
 jobs:
   install:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [16.x]
@@ -23,7 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-
 
-      - uses: pnpm/action-setup@v2.2.2
+      - uses: pnpm/action-setup@v2.2.4
         with:
           version: 7
           run_install: true
@@ -71,6 +71,7 @@ jobs:
           git init
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@noreply.github.com"
+          touch .nojekyll
           git add .
           git status
           git commit -m "Push to gh-pages"

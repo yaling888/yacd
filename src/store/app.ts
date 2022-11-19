@@ -1,5 +1,7 @@
 import { DispatchFn, GetStateFn, State, StateApp } from 'src/store/types';
 
+import { ClashAPIConfig } from '$src/types';
+
 import { loadState, saveState } from '../misc/storage';
 import { debounce, trimTrailingSlash } from '../misc/utils';
 import { fetchConfigs } from './configs';
@@ -22,21 +24,24 @@ export const getLogStreamingPaused = (s: State) => s.app.logStreamingPaused;
 
 const saveStateDebounced = debounce(saveState, 600);
 
-function findClashAPIConfigIndex(getState: GetStateFn, { baseURL, secret }) {
+function findClashAPIConfigIndex(
+  getState: GetStateFn,
+  { baseURL, secret, metaLabel }: ClashAPIConfig
+) {
   const arr = getClashAPIConfigs(getState());
   for (let i = 0; i < arr.length; i++) {
     const x = arr[i];
-    if (x.baseURL === baseURL && x.secret === secret) return i;
+    if (x.baseURL === baseURL && x.secret === secret && x.metaLabel === metaLabel) return i;
   }
 }
 
-export function addClashAPIConfig({ baseURL, secret }) {
+export function addClashAPIConfig(conf: ClashAPIConfig) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, { baseURL, secret });
+    const idx = findClashAPIConfigIndex(getState, conf);
     // already exists
     if (idx) return;
 
-    const clashAPIConfig = { baseURL, secret, addedAt: Date.now() };
+    const clashAPIConfig = { ...conf, addedAt: Date.now() };
     dispatch('addClashAPIConfig', (s) => {
       s.app.clashAPIConfigs.push(clashAPIConfig);
     });
@@ -45,9 +50,9 @@ export function addClashAPIConfig({ baseURL, secret }) {
   };
 }
 
-export function removeClashAPIConfig({ baseURL, secret }) {
+export function removeClashAPIConfig(conf: ClashAPIConfig) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, { baseURL, secret });
+    const idx = findClashAPIConfigIndex(getState, conf);
     dispatch('removeClashAPIConfig', (s) => {
       s.app.clashAPIConfigs.splice(idx, 1);
     });
@@ -56,9 +61,9 @@ export function removeClashAPIConfig({ baseURL, secret }) {
   };
 }
 
-export function selectClashAPIConfig({ baseURL, secret }) {
+export function selectClashAPIConfig(conf: ClashAPIConfig) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, { baseURL, secret });
+    const idx = findClashAPIConfigIndex(getState, conf);
     const curr = getSelectedClashAPIConfigIndex(getState());
     if (curr !== idx) {
       dispatch('selectClashAPIConfig', (s) => {
@@ -79,9 +84,9 @@ export function selectClashAPIConfig({ baseURL, secret }) {
 }
 
 // unused
-export function updateClashAPIConfig({ baseURL, secret }) {
+export function updateClashAPIConfig(conf: ClashAPIConfig) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const clashAPIConfig = { baseURL, secret };
+    const clashAPIConfig = conf;
     dispatch('appUpdateClashAPIConfig', (s) => {
       s.app.clashAPIConfigs[0] = clashAPIConfig;
     });
@@ -95,6 +100,45 @@ export function updateClashAPIConfig({ baseURL, secret }) {
 const rootEl = document.querySelector('html');
 type ThemeType = 'dark' | 'light' | 'auto';
 
+function insertThemeColorMeta(color: string, media?: string) {
+  const meta0 = document.createElement('meta');
+  meta0.setAttribute('name', 'theme-color');
+  meta0.setAttribute('content', color);
+  if (media) meta0.setAttribute('media', media);
+  document.head.appendChild(meta0);
+}
+
+function updateMetaThemeColor(theme: ThemeType) {
+  const metas = Array.from(
+    document.querySelectorAll('meta[name=theme-color]')
+  ) as HTMLMetaElement[];
+  let meta0: HTMLMetaElement;
+  for (const m of metas) {
+    if (!m.getAttribute('media')) {
+      meta0 = m;
+    } else {
+      document.head.removeChild(m);
+    }
+  }
+
+  if (theme === 'auto') {
+    insertThemeColorMeta('#eeeeee', '(prefers-color-scheme: light)');
+    insertThemeColorMeta('#202020', '(prefers-color-scheme: dark)');
+    if (meta0) {
+      document.head.removeChild(meta0);
+    } else {
+      return;
+    }
+  } else {
+    const color = theme === 'light' ? '#eeeeee' : '#202020';
+    if (!meta0) {
+      insertThemeColorMeta(color);
+    } else {
+      meta0.setAttribute('content', color);
+    }
+  }
+}
+
 function setTheme(theme: ThemeType = 'dark') {
   if (theme === 'auto') {
     rootEl.setAttribute('data-theme', 'auto');
@@ -103,6 +147,7 @@ function setTheme(theme: ThemeType = 'dark') {
   } else {
     rootEl.setAttribute('data-theme', 'light');
   }
+  updateMetaThemeColor(theme);
 }
 
 export function switchTheme(nextTheme = 'auto') {

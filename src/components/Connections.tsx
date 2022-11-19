@@ -4,7 +4,7 @@ import React from 'react';
 import { Pause, Play, X as IconClose } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
-import { basePath, ConnectionItem } from 'src/api/connections';
+import { ConnectionItem } from 'src/api/connections';
 import { State } from 'src/store/types';
 
 import * as connAPI from '../api/connections';
@@ -12,6 +12,7 @@ import useRemainingViewPortHeight from '../hooks/useRemainingViewPortHeight';
 import { getClashAPIConfig } from '../store/app';
 import s from './Connections.module.scss';
 import ConnectionTable from './ConnectionTable';
+import { MutableConnRefCtx } from './conns/ConnCtx';
 import ContentHeader from './ContentHeader';
 import ModalCloseAllConnections from './ModalCloseAllConnections';
 import { Action, Fab, position as fabPosition } from './shared/Fab';
@@ -31,6 +32,10 @@ function arrayToIdKv<T extends { id: string }>(items: T[]) {
   return o;
 }
 
+function basePath(path: string) {
+  return path?.replace(/.*[/\\]/, '');
+}
+
 type FormattedConn = {
   id: string;
   upload: number;
@@ -46,7 +51,7 @@ type FormattedConn = {
   host: string;
   type: string;
   network: string;
-  process?: string;
+  processPath?: string;
   downloadSpeedCurr?: number;
   uploadSpeedCurr?: number;
 };
@@ -68,7 +73,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
           conn.rule,
           conn.type,
           conn.network,
-          conn.process,
+          conn.processPath,
         ].some((field) => hasSubstring(field, keyword))
       );
 }
@@ -76,25 +81,21 @@ function filterConns(conns: FormattedConn[], keyword: string) {
 function formatConnectionDataItem(
   i: ConnectionItem,
   prevKv: Record<string, { upload: number; download: number }>,
-  now: number
+  now: number,
+  mutConnCtxRef: { hasProcessPath: boolean }
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
-  const {
-    host,
-    destinationPort,
-    destinationIP,
-    network,
-    type,
-    sourceIP,
-    sourcePort,
-    process,
-    processPath,
-  } = metadata;
+  const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort } = metadata;
+  const processPath = metadata.processPath;
+  if (mutConnCtxRef.hasProcessPath === false && typeof processPath !== 'undefined') {
+    mutConnCtxRef.hasProcessPath = true;
+  }
+
   // host could be an empty string if it's direct IP connection
   let host2 = host;
   if (host2 === '') host2 = destinationIP;
   const prev = prevKv[id];
-  return {
+  const ret = {
     id,
     upload,
     download,
@@ -107,8 +108,9 @@ function formatConnectionDataItem(
     source: `${sourceIP}:${sourcePort}`,
     downloadSpeedCurr: download - (prev ? prev.download : 0),
     uploadSpeedCurr: upload - (prev ? prev.upload : 0),
-    process: process ? process : (processPath ? basePath(processPath) : ''),
+    process: basePath(processPath),
   };
+  return ret;
 }
 
 function renderTableOrPlaceholder(conns: FormattedConn[]) {
@@ -144,12 +146,13 @@ function Conn({ apiConfig }) {
     closeCloseAllModal();
   }, [apiConfig, closeCloseAllModal]);
   const prevConnsRef = useRef(conns);
+  const connCtx = React.useContext(MutableConnRefCtx);
   const read = useCallback(
     ({ connections }) => {
       const prevConnsKv = arrayToIdKv(prevConnsRef.current);
       const now = Date.now();
       const x = connections.map((c: ConnectionItem) =>
-        formatConnectionDataItem(c, prevConnsKv, now)
+        formatConnectionDataItem(c, prevConnsKv, now, connCtx)
       );
       const closed = [];
       for (const c of prevConnsRef.current) {
@@ -161,7 +164,7 @@ function Conn({ apiConfig }) {
         return [...closed, ...prev].slice(0, 101);
       });
       // if previous connections and current connections are both empty
-      // arrays, we wont update state to avaoid rerender
+      // arrays, we won't update state to avaoid rerender
       if (x && (x.length !== 0 || prevConnsRef.current.length !== 0) && !isRefreshPaused) {
         prevConnsRef.current = x;
         setConns(x);
