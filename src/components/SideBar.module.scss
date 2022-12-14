@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 3px;
   @media (max-width: 768px) {
     padding: 0;
   }
@@ -33,7 +33,7 @@
   align-items: center;
   padding: 6px 16px;
   @media (--breakpoint-not-small) {
-    padding: 8px 20px;
+    padding: 8px 10px;
   }
 
   @media (max-width: 768px) {
