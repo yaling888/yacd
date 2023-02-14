@@ -138,9 +138,7 @@ function Conn({ apiConfig }) {
   const openCloseAllModal = useCallback(() => setIsCloseAllModalOpen(true), []);
   const closeCloseAllModal = useCallback(() => setIsCloseAllModalOpen(false), []);
   const [isRefreshPaused, setIsRefreshPaused] = useState(false);
-  const toggleIsRefreshPaused = useCallback(() => {
-    setIsRefreshPaused((x) => !x);
-  }, []);
+  const toggleIsRefreshPaused = useCallback(() => setIsRefreshPaused((x) => !x), []);
   const closeAllConnections = useCallback(() => {
     connAPI.closeAllConnections(apiConfig);
     closeCloseAllModal();
@@ -172,7 +170,7 @@ function Conn({ apiConfig }) {
         prevConnsRef.current = x;
       }
     },
-    [setConns, isRefreshPaused]
+    [setConns, isRefreshPaused, connCtx]
   );
   useEffect(() => {
     return connAPI.fetchData(apiConfig, read);

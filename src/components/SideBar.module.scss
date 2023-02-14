@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   padding: 6px 16px;
-  @media (--breakpoint-not-small) {
+  @media screen and (min-width: 30em) {
     border-radius: 13px;
     padding: 8px 13px;
   }
@@ -50,7 +50,7 @@
     width: 22px;
     height: 22px;
 
-    @media (--breakpoint-not-small) {
+    @media screen and (min-width: 30em) {
       width: 24px;
       height: 24px;
     }
@@ -77,7 +77,7 @@
     padding-top: 5px;
   }
 
-  @media (--breakpoint-not-small) {
+  @media screen and (min-width: 30em) {
     padding-left: 8px;
     font-size: 1em;
   }

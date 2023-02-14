@@ -17,7 +17,7 @@
 
   min-width: 260px;
   max-width: 260px;
-  @media (--breakpoint-not-small) {
+  @media screen and (min-width: 30em) {
     min-width: 200px;
     max-width: 200px;
     border-radius: 10px;
@@ -45,7 +45,7 @@
   font-family: var(--font-mono);
   font-size: 0.6em;
   margin-right: 3px;
-  @media (--breakpoint-not-small) {
+  @media screen and (min-width: 30em) {
     font-size: 0.85em;
   }
 }

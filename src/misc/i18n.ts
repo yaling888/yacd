@@ -1,51 +1,39 @@
+import type { ReadCallback } from 'i18next';
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
-const allLocales = {
-  zh: import('src/i18n/zh'),
-  en: import('src/i18n/en'),
+const LngBackend = {
+  type: 'backend' as const,
+  read: (lng: string, _namespace: string, callback: ReadCallback) => {
+    let p: PromiseLike<{ data: any }>;
+    switch (lng) {
+      case 'zh':
+      case 'zh-CN':
+        p = import('src/i18n/zh');
+        break;
+      case 'en':
+      default:
+        p = import('src/i18n/en');
+        break;
+    }
+    if (p) {
+      p.then(
+        (d) => callback(null, d.data),
+        (err) => callback(err, null)
+      );
+    } else {
+      callback(new Error(`unable to load translation file for language ${lng}`), null);
+    }
+  },
 };
 
-type BackendRequestCallback = (err: null, result: { status: number; data: any }) => void;
-
 i18next
-  .use(HttpBackend)
   .use(initReactI18next)
   .use(LanguageDetector)
+  .use(LngBackend)
   .init({
     debug: process.env.NODE_ENV === 'development',
-    // resources,
-    backend: {
-      loadPath: '/__{{lng}}/{{ns}}.json',
-      request: function (
-        _options: any,
-        url: string,
-        _payload: any,
-        callback: BackendRequestCallback
-      ) {
-        let p: PromiseLike<{ data: any }>;
-
-        switch (url) {
-          case '/__zh/translation.json':
-          case '/__zh-CN/translation.json':
-            p = allLocales.zh;
-            break;
-          case '/__en/translation.json':
-          default:
-            p = allLocales.en;
-            break;
-        }
-
-        if (p) {
-          p.then((mod) => {
-            callback(null, { status: 200, data: mod.data });
-          });
-        }
-      },
-    },
-    supportedLngs: ['en', 'zh'],
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,

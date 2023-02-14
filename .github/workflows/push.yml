@@ -3,6 +3,11 @@ name: Deploy workflow
 jobs:
   install:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # https://github.com/actions/deploy-pages
+      pages: write
+      id-token: write
     strategy:
       matrix:
         node-version: [16.x]
@@ -30,6 +35,10 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+      - name: Set git commit sha
+        id: revparse
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Build
         run: pnpm build
 
