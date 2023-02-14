@@ -36,8 +36,6 @@ function Proxies({
   apiConfig,
   showModalClosePrevConns,
 }) {
-  dispatch(fetchClashVersion(apiConfig));
-
   const refFetchedTimestamp = useRef<{ startAt?: number; completeAt?: number }>({});
 
   const fetchProxiesHooked = useCallback(() => {
@@ -45,6 +43,7 @@ function Proxies({
     dispatch(fetchProxies(apiConfig)).then(() => {
       refFetchedTimestamp.current.completeAt = Date.now();
     });
+    dispatch(fetchClashVersion(apiConfig));
   }, [apiConfig, dispatch]);
   useEffect(() => {
     // fetch it now
