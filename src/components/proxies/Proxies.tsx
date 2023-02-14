@@ -15,6 +15,7 @@ import Equalizer from 'src/components/svg/Equalizer';
 import { getClashAPIConfig } from 'src/store/app';
 import { proxyFilterText } from 'src/store/proxies';
 import {
+  fetchClashVersion,
   fetchProxies,
   getDelay,
   getProxyGroupNames,
@@ -35,6 +36,8 @@ function Proxies({
   apiConfig,
   showModalClosePrevConns,
 }) {
+  dispatch(fetchClashVersion(apiConfig));
+
   const refFetchedTimestamp = useRef<{ startAt?: number; completeAt?: number }>({});
 
   const fetchProxiesHooked = useCallback(() => {

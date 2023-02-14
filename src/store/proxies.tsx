@@ -1,4 +1,5 @@
 import { atom } from 'recoil';
+import { fetchVersion } from 'src/api/version';
 import {
   DelayMapping,
   DispatchFn,
@@ -23,6 +24,7 @@ export const initialState: StateProxies = {
   delay: {},
   groupNames: [],
   showModalClosePrevConns: false,
+  isPlusPro: false,
 };
 
 const noop = () => null;
@@ -51,6 +53,7 @@ export const getProxyGroupNames = (s: State) => s.proxies.groupNames;
 export const getProxyProviders = (s: State) => s.proxies.proxyProviders || [];
 export const getDangleProxyNames = (s: State) => s.proxies.dangleProxyNames;
 export const getShowModalClosePrevConns = (s: State) => s.proxies.showModalClosePrevConns;
+export const isClashPlusPro = (s: State) => s.proxies.isPlusPro;
 
 function mapLatency(names: string[], getProxy: (name: string) => { history: LatencyHistory }) {
   const result: DelayMapping = {};
@@ -307,43 +310,47 @@ export function requestDelayForProxy(apiConfig: ClashAPIConfig, name: string) {
 }
 
 export function requestDelayForProxies(apiConfig: ClashAPIConfig, names: string[]) {
-  return async (dispatch: DispatchFn) => {
-  // return async (dispatch: DispatchFn, getState: GetStateFn) => {
-  //   const proxies = getProxies(getState());
-
+  return async (dispatch: DispatchFn, getState: GetStateFn) => {
+    const isPlusPro = isClashPlusPro(getState());
     const proxyDedupMap = new Map<string, boolean>();
-    // const providerDedupMap = new Map<string, boolean>();
-    //
-    // const works: Array<Promise<void>> = [];
 
-    names.forEach((name) => {
-      // const p = proxies[name];
-      // if (!p.__provider) {
-      //   if (!proxyDedupMap.get(name)) {
-      //     proxyDedupMap.set(name, true);
-      //     dispatch(requestDelayForProxyOnce(apiConfig, name));
-      //   }
-      // } else if (p.__provider) {
-      //   if (!proxyDedupMap.get(name)) {
-      //     proxyDedupMap.set(name, true);
-      //     dispatch('set latency state to testing in progress', (s) => {
-      //       s.proxies.delay = { ...getDelay(getState()), [name]: { kind: 'Testing' } };
-      //     });
-      //   }
-      //   // this one is from a proxy provider
-      //   if (!providerDedupMap.get(p.__provider)) {
-      //     providerDedupMap.set(p.__provider, true);
-      //     works.push(healthcheckProviderByNameInternal(apiConfig, p.__provider));
-      //   }
-      // }
+    if (isPlusPro) {
+      names.forEach((name) => {
+        if (!proxyDedupMap.get(name)) {
+          proxyDedupMap.set(name, true);
+          dispatch(requestDelayForProxyOnce(apiConfig, name));
+        }
+      });
+    } else {
+      const proxies = getProxies(getState());
+      const providerDedupMap = new Map<string, boolean>();
 
-      if (!proxyDedupMap.get(name)) {
-        proxyDedupMap.set(name, true);
-        dispatch(requestDelayForProxyOnce(apiConfig, name));
-      }
-    });
-    // await Promise.all(works);
-    await dispatch(fetchProxies(apiConfig));
+      const works: Array<Promise<void>> = [];
+
+      names.forEach((name) => {
+        const p = proxies[name];
+        if (!p.__provider) {
+          if (!proxyDedupMap.get(name)) {
+            proxyDedupMap.set(name, true);
+            dispatch(requestDelayForProxyOnce(apiConfig, name));
+          }
+        } else if (p.__provider) {
+          if (!proxyDedupMap.get(name)) {
+            proxyDedupMap.set(name, true);
+            dispatch('set latency state to testing in progress', (s) => {
+              s.proxies.delay = { ...getDelay(getState()), [name]: { kind: 'Testing' } };
+            });
+          }
+          // this one is from a proxy provider
+          if (!providerDedupMap.get(p.__provider)) {
+            providerDedupMap.set(p.__provider, true);
+            works.push(healthcheckProviderByNameInternal(apiConfig, p.__provider));
+          }
+        }
+      });
+      await Promise.all(works);
+      await dispatch(fetchProxies(apiConfig));
+    }
   };
 }
 
@@ -360,6 +367,16 @@ export function requestDelayAll(apiConfig: ClashAPIConfig) {
       await healthcheckProviderByNameInternal(apiConfig, p.name);
     }
     await dispatch(fetchProxies(apiConfig));
+  };
+}
+
+export function fetchClashVersion(apiConfig: ClashAPIConfig) {
+  return async (dispatch: DispatchFn) => {
+    const clashVersion = await fetchVersion(apiConfig);
+    const isPlusPro = clashVersion.version && clashVersion.version.indexOf('PlusPro') > -1;
+    dispatch('updateIsPlusPro', (s: State) => {
+      s.proxies.isPlusPro = isPlusPro;
+    });
   };
 }
 

@@ -30,8 +30,8 @@ function Version({ name, link, version }: { name: string; link: string; version:
 }
 
 function AboutImpl(props: Props) {
-  const { data: version } = useQuery(['/version', props.apiConfig], () =>
-    fetchVersion('/version', props.apiConfig)
+  const { data: version } = useQuery([props.apiConfig], () =>
+    fetchVersion(props.apiConfig)
   );
   return (
     <>

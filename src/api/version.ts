@@ -1,13 +1,14 @@
 import { getURLAndInit } from 'src/misc/request-helper';
 import { ClashAPIConfig } from 'src/types';
 
+const endpoint = "/version";
+
 type VersionData = {
   version?: string;
   premium?: boolean;
 };
 
 export async function fetchVersion(
-  endpoint: string,
   apiConfig: ClashAPIConfig
 ): Promise<VersionData> {
   let json = {};
