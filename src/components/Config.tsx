@@ -205,6 +205,7 @@ function ConfigImpl({
   },[apiConfig, dispatch]);
 
   const { t, i18n } = useTranslation();
+  const currentLang = i18n.language && i18n.language.indexOf('zh') > -1 ? 'zh' : 'en';
 
   return (
     <div>
@@ -350,7 +351,7 @@ function ConfigImpl({
           <div>
             <Select
               options={langOptions}
-              selected={i18n.language}
+              selected={currentLang}
               onChange={(e) => i18n.changeLanguage(e.target.value)}
             />
           </div>

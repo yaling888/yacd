@@ -68,7 +68,7 @@ function Table({ data }) {
   );
 
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === 'zh' ? zhCN : enUS;
+  const locale = i18n.language && i18n.language.indexOf('zh') > -1 ? zhCN : enUS;
 
   return (
     <div
