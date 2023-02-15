@@ -46,7 +46,7 @@ export const data = {
   enable_tun_device: '开启 TUN 转发',
   allow_lan: '允许局域网连接',
   tls_sniffing: 'SNI 嗅探',
-  c_host: '域名',
+  c_host: '目标主机',
   c_process: '进程',
   c_dl: '下载',
   c_ul: '上传',
