@@ -33,6 +33,7 @@
   align-items: center;
   padding: 6px 16px;
   @media screen and (min-width: 30em) {
+    min-width: 110px;
     border-radius: 13px;
     padding: 8px 13px;
   }
