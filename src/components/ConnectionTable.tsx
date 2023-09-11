@@ -78,11 +78,11 @@ function Table({ data }) {
         '--col-count': connCtx.hasProcessPath ? '12' : '11',
       }}
     >
-      {headerGroups.map((headerGroup) => {
+      {headerGroups.map((headerGroup, i) => {
         return (
-          <div {...headerGroup.getHeaderGroupProps()} className={s.tr}>
-            {headerGroup.headers.map((column) => (
-              <div {...column.getHeaderProps(column.getSortByToggleProps())} className={s.th}>
+          <div key={i} {...headerGroup.getHeaderGroupProps()} className={s.tr}>
+            {headerGroup.headers.map((column, idx) => (
+              <div key={idx} {...column.getHeaderProps(column.getSortByToggleProps())} className={s.th}>
                 <span>{t(column.render('Header'))}</span>
                 <span className={s.sortIconContainer}>
                   {column.isSorted ? (
@@ -99,6 +99,7 @@ function Table({ data }) {
               return row.cells.map((cell, j) => {
                 return (
                   <div
+                    key={j}
                     {...cell.getCellProps()}
                     className={cx(
                       s.td,
