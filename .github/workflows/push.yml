@@ -101,22 +101,6 @@ jobs:
           git add .
           git commit -m "Push to gh-pages"
           git push -f https://$GITHUB_ACTOR:${GITHUB_TOKEN}@github.com/${GITHUB_ACTOR}/pagek.git HEAD:$BRANCH
-          echo "yacd.clash-plus.ml" > CNAME
-          rm -rf .git/
-          git init
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@noreply.github.com"
-          git add .
-          git commit -m "Push to gh-pages"
-          git push -f https://$GITHUB_ACTOR:${GITHUB_TOKEN}@github.com/${GITHUB_ACTOR}/pagel.git HEAD:$BRANCH
-          echo "yacd.clash-plus.ga" > CNAME
-          rm -rf .git/
-          git init
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@noreply.github.com"
-          git add .
-          git commit -m "Push to gh-pages"
-          git push -f https://$GITHUB_ACTOR:${GITHUB_TOKEN}@github.com/${GITHUB_ACTOR}/pagea.git HEAD:$BRANCH
           echo "yacd.clash-plus.gq" > CNAME
           rm -rf .git/
           git init
