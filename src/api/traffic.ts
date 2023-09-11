@@ -92,7 +92,7 @@ function fetchData(apiConfig: ClashAPIConfig) {
         traffic.down.fill(undefined);
         traffic.labels.fill(0);
 
-        fetchDataWithFetch(apiConfig);
+        fetchData(apiConfig);
       };
   document.addEventListener('freeze', onFrozen, { capture: true, once: true });
   document.addEventListener('resume', onResume, { capture: true, once: true });

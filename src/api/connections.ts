@@ -73,8 +73,6 @@ export function fetchData(apiConfig: ClashAPIConfig, listener: unknown): Unsubsc
       // For unexpected close, remove listeners and retry
       document.removeEventListener('freeze', onFrozen);
       document.removeEventListener('resume', onResume);
-
-      fetchData(apiConfig, undefined);
     }
   });
   ws.addEventListener('message', (event) => appendData(event.data));
