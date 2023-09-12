@@ -84,16 +84,16 @@ function fetchData(apiConfig: ClashAPIConfig) {
 
   let frozenState = false;
   const onFrozen = () => { frozenState = true; ws.close(); },
-      onResume = () => {
-        frozenState = false;
+    onResume = () => {
+      frozenState = false;
 
-        // wipe outdated data
-        traffic.up.fill(undefined);
-        traffic.down.fill(undefined);
-        traffic.labels.fill(0);
+      // wipe outdated data
+      traffic.up.fill(undefined);
+      traffic.down.fill(undefined);
+      traffic.labels.fill(0);
 
-        fetchData(apiConfig);
-      };
+      fetchData(apiConfig);
+    };
   document.addEventListener('freeze', onFrozen, { capture: true, once: true });
   document.addEventListener('resume', onResume, { capture: true, once: true });
 

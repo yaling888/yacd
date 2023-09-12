@@ -62,7 +62,7 @@ export function fetchData(apiConfig: ClashAPIConfig, listener: unknown): Unsubsc
 
   let frozenState = false;
   const onFrozen = () => { frozenState = true; ws.close(); },
-      onResume = () => { frozenState = false; fetchData(apiConfig, undefined); };
+    onResume = () => { frozenState = false; fetchData(apiConfig, undefined); };
   document.addEventListener('freeze', onFrozen, { capture: true, once: true });
   document.addEventListener('resume', onResume, { capture: true, once: true });
 

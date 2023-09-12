@@ -117,11 +117,11 @@ function ConfigImpl({
   );
 
   const setTunConfigState = useCallback(
-      (name, val) => {
-        const tun = {...configState.tun, [name]: val }
-        setConfigStateInternal({ ...configState, tun: {...tun}});
-      },
-      [configState]
+    (name, val) => {
+      const tun = {...configState.tun, [name]: val };
+      setConfigStateInternal({ ...configState, tun: {...tun}});
+    },
+    [configState]
   );
 
   const handleChangeValue = useCallback(
