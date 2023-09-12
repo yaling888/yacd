@@ -30,16 +30,18 @@ export const getLogsForDisplay = createSelector(
 );
 
 export function updateLogLevel(apiConfig: LogsAPIConfig, logLevel: string) {
-    return async (dispatch: DispatchFn) => {
-        dispatch('logsUpdateLogLevel', (s) => {
-            if (s.logs.logLevel === logLevel) {
-                return;
-            }
+  return async (dispatch: DispatchFn, getState: GetStateFn) => {
+    const oldLevel = getLogLevel(getState());
+    if (oldLevel === logLevel) {
+      return;
+    }
 
-            s.logs.logLevel = logLevel;
-            reconnectLogs({ ...apiConfig, logLevel });
-        });
-    };
+    reconnectLogs({ ...apiConfig, logLevel });
+
+    dispatch('logsUpdateLogLevel', (s) => {
+      s.logs.logLevel = logLevel;
+    });
+  };
 }
 
 export function updateSearchText(text: string) {

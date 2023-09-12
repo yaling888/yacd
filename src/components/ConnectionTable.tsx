@@ -55,7 +55,6 @@ const tableState = {
   hiddenColumns: ['id'],
 };
 
-// eslint-disable-next-line react/prop-types
 function Table({ data }) {
   const connCtx = React.useContext(MutableConnRefCtx);
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
