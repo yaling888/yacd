@@ -6,16 +6,24 @@ import { areEqual, FixedSizeList as List, ListChildComponentProps } from 'react-
 import { fetchLogs, reconnect as reconnectLogs, stop as stopLogs } from 'src/api/logs';
 import ContentHeader from 'src/components/ContentHeader';
 import LogSearch from 'src/components/LogSearch';
+import Select from 'src/components/shared/Select';
 import { connect, useStoreActions } from 'src/components/StateProvider';
 import SvgYacd from 'src/components/SvgYacd';
 import useRemainingViewPortHeight from 'src/hooks/useRemainingViewPortHeight';
 import { getClashAPIConfig, getLogStreamingPaused } from 'src/store/app';
-import { getLogLevel } from 'src/store/configs';
-import { appendLog, getLogsForDisplay } from 'src/store/logs';
+import { appendLog, getLogLevel, getLogsForDisplay, updateLogLevel } from 'src/store/logs';
 import { Log, State } from 'src/store/types';
 
 import s from './Logs.module.scss';
 import { Fab, position as fabPosition } from './shared/Fab';
+
+const logLeveOptions = [
+  ['debug', 'Debug'],
+  ['info', 'Info'],
+  ['warning', 'Warning'],
+  ['error', 'Error'],
+  ['silent', 'Silent'],
+];
 
 const { useCallback, memo, useEffect } = React;
 
@@ -68,6 +76,12 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
     // ideally we should check the result of previous operation before updating this
     actions.app.updateAppConfig('logStreamingPaused', !logStreamingPaused);
   }, [apiConfig, logLevel, logStreamingPaused, actions.app]);
+
+  const onChangeLogLevel = useCallback((e) => {
+    const level = e.target.value;
+    dispatch(updateLogLevel(apiConfig, level));
+  }, [apiConfig, dispatch]);
+
   const appendLogInternal = useCallback((log) => dispatch(appendLog(log)), [dispatch]);
   useEffect(() => {
     fetchLogs({ ...apiConfig, logLevel }, appendLogInternal);
@@ -79,6 +93,13 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
     <div>
       <ContentHeader title={t('Logs')} />
       <div className={s.search}>
+        <div className={s.logLevel}>
+          <Select
+              options={logLeveOptions}
+              selected={logLevel}
+              onChange={onChangeLogLevel}
+          />
+        </div>
         <LogSearch />
       </div>
       <div ref={refLogsContainer} style={{ paddingBottom }}>

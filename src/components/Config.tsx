@@ -2,7 +2,6 @@ import * as React from 'react';
 import { DownloadCloud, LogOut, RotateCw, Trash2 } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { closeAllConnections } from "src/api/connections";
-import * as logsApi from 'src/api/logs';
 import Select from 'src/components/shared/Select';
 import { ClashGeneralConfig, DispatchFn, State } from 'src/store/types';
 import { ClashAPIConfig } from 'src/types';
@@ -134,9 +133,6 @@ function ConfigImpl({
         case 'sniffing':
           setConfigState(name, value);
           dispatch(updateConfigs(apiConfig, { [name]: value }));
-          if (name === 'log-level') {
-            logsApi.reconnect({ ...apiConfig, logLevel: value });
-          }
           break;
         case 'mitm-port':
         case 'redir-port':

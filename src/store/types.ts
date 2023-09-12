@@ -105,6 +105,7 @@ export type Log = {
 };
 
 export type StateLogs = {
+  logLevel: string;
   searchText: string;
   logs: Log[];
   tail: number;

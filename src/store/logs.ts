@@ -1,10 +1,13 @@
 import { createSelector } from 'reselect';
+import { reconnect as reconnectLogs } from 'src/api/logs';
 import { DispatchFn, GetStateFn, Log, State } from 'src/store/types';
+import { LogsAPIConfig } from 'src/types';
 
 const LogSize = 300;
 
 const getLogs = (s: State) => s.logs.logs;
 const getTail = (s: State) => s.logs.tail;
+export const getLogLevel = (s: State) => s.logs.logLevel;
 export const getSearchText = (s: State) => s.logs.searchText;
 export const getLogsForDisplay = createSelector(
   getLogs,
@@ -25,6 +28,19 @@ export const getLogsForDisplay = createSelector(
     return x.filter((r) => r.payload.toLowerCase().indexOf(searchText) >= 0);
   }
 );
+
+export function updateLogLevel(apiConfig: LogsAPIConfig, logLevel: string) {
+    return async (dispatch: DispatchFn) => {
+        dispatch('logsUpdateLogLevel', (s) => {
+            if (s.logs.logLevel === logLevel) {
+                return;
+            }
+
+            s.logs.logLevel = logLevel;
+            reconnectLogs({ ...apiConfig, logLevel });
+        });
+    };
+}
 
 export function updateSearchText(text: string) {
   return (dispatch: DispatchFn) => {
@@ -50,6 +66,7 @@ export function appendLog(log: Log) {
 }
 
 export const initialState = {
+  logLevel: 'info',
   searchText: '',
   logs: [],
   // tail's initial value must be -1
