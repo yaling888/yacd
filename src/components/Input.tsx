@@ -17,6 +17,7 @@ export default function Input(props: InputProps) {
   return <input className={s0.input} {...props} />;
 }
 
+// eslint-disable-next-line react/prop-types
 export function SelfControlledInput({ value, ...restProps }) {
   const [internalValue, setInternalValue] = useState(value);
   const refValue = useRef(value);

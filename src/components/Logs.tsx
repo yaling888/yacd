@@ -68,6 +68,7 @@ const Row = memo(({ index, style, data }: ListChildComponentProps<LogLineProps>)
 
 Row.displayName = 'MemoRow';
 
+// eslint-disable-next-line react/prop-types
 function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
   const actions = useStoreActions();
   const toggleIsRefreshPaused = useCallback(() => {
@@ -79,8 +80,8 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
 
   const onChangeLogLevel = useCallback((e) => {
     const level = e.target.value;
-    dispatch(updateLogLevel(apiConfig, level));
-  }, [apiConfig, dispatch]);
+    updateLogLevel(apiConfig, level);
+  }, [apiConfig]);
 
   const appendLogInternal = useCallback((log) => dispatch(appendLog(log)), [dispatch]);
   useEffect(() => {
@@ -100,9 +101,12 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
               onChange={onChangeLogLevel}
           />
         </div>
-        <LogSearch />
+        <div className={s.searchBox}>
+          <LogSearch />
+        </div>
       </div>
       <div ref={refLogsContainer} style={{ paddingBottom }}>
+        {/* eslint-disable-next-line react/prop-types */}
         {logs.length === 0 ? (
           <div className={s.logPlaceholder} style={{ height: containerHeight - paddingBottom }}>
             <div className={s.logPlaceholderIcon}>
@@ -115,6 +119,7 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
             <List
               height={containerHeight - paddingBottom}
               width="100%"
+              // eslint-disable-next-line react/prop-types
               itemCount={logs.length}
               itemSize={80}
               itemData={logs}

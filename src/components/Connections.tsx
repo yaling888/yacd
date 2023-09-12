@@ -127,6 +127,7 @@ function connQty({ qty }) {
   return qty < 100 ? '' + qty : '99+';
 }
 
+// eslint-disable-next-line react/prop-types
 function Conn({ apiConfig }) {
   const [refContainer, containerHeight] = useRemainingViewPortHeight();
   const [conns, setConns] = useState([]);
