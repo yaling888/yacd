@@ -52,11 +52,13 @@ function APIConfig({ dispatch }: { dispatch: DispatchFn }) {
   }, []);
 
   const onConfirm = useCallback(() => {
-    verify({ baseURL, secret }).then((ret) => {
+    const bUrl = baseURL.endsWith('/') ? baseURL.substr(0, baseURL.length - 1) : baseURL;
+    verify({ baseURL: bUrl, secret: secret }).then((ret) => {
       if (ret[0] !== Ok) {
         setErrMsg(ret[1]);
       } else {
-        dispatch(addClashAPIConfig({ baseURL, secret, metaLabel }));
+        setBaseURL(bUrl)
+        dispatch(addClashAPIConfig({ baseURL: bUrl, secret: secret , metaLabel: metaLabel }));
       }
     });
   }, [baseURL, secret, metaLabel, dispatch]);
