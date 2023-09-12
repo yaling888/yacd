@@ -79,7 +79,8 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
 
   const onChangeLogLevel = useCallback((e) => {
     const level = e.target.value;
-    dispatch(updateLogLevel(apiConfig, level));
+    reconnectLogs({ ...apiConfig, logLevel: level });
+    dispatch(updateLogLevel(level));
   }, [apiConfig, dispatch]);
 
   const appendLogInternal = useCallback((log) => dispatch(appendLog(log)), [dispatch]);

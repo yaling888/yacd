@@ -1,7 +1,5 @@
 import { createSelector } from 'reselect';
-import { reconnect as reconnectLogs } from 'src/api/logs';
 import { DispatchFn, GetStateFn, Log, State } from 'src/store/types';
-import { LogsAPIConfig } from 'src/types';
 
 const LogSize = 300;
 
@@ -29,15 +27,8 @@ export const getLogsForDisplay = createSelector(
   }
 );
 
-export function updateLogLevel(apiConfig: LogsAPIConfig, logLevel: string) {
-  return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const oldLevel = getLogLevel(getState());
-    if (oldLevel === logLevel) {
-      return;
-    }
-
-    reconnectLogs({ ...apiConfig, logLevel });
-
+export function updateLogLevel(logLevel: string) {
+  return (dispatch: DispatchFn) => {
     dispatch('logsUpdateLogLevel', (s) => {
       s.logs.logLevel = logLevel;
     });
