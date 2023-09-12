@@ -25,7 +25,7 @@ const logLeveOptions = [
   ['silent', 'Silent'],
 ];
 
-const { useCallback, memo, useEffect } = React;
+const { useCallback, memo, useEffect, useRef } = React;
 
 const paddingBottom = 30;
 const colors = {
@@ -79,14 +79,29 @@ function Logs({ dispatch, logLevel, apiConfig, logs, logStreamingPaused }) {
 
   const onChangeLogLevel = useCallback((e) => {
     const level = e.target.value;
-    reconnectLogs({ ...apiConfig, logLevel: level });
+    if (logLevel === level) return;
+    stopLogs();
     dispatch(updateLogLevel(level));
-  }, [apiConfig, dispatch]);
+  }, [logLevel, dispatch]);
 
+  const refFetch = useRef(0);
   const appendLogInternal = useCallback((log) => dispatch(appendLog(log)), [dispatch]);
   useEffect(() => {
+    return () => {
+      if (refFetch.current === 1) {
+        refFetch.current = 0;
+        stopLogs();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (refFetch.current === 0) {
+      refFetch.current = 1;
+    }
     fetchLogs({ ...apiConfig, logLevel }, appendLogInternal);
   }, [apiConfig, logLevel, appendLogInternal]);
+
   const [refLogsContainer, containerHeight] = useRemainingViewPortHeight();
   const { t } = useTranslation();
 
