@@ -54,6 +54,7 @@ export const data = {
   c_ul_speed: '上传速率',
   c_chains: '节点链',
   c_rule: '规则',
+  c_rule_group: '规则组',
   c_time: '连接时间',
   c_source: '来源',
   c_destination_ip: '目标IP',

@@ -43,6 +43,7 @@ type FormattedConn = {
   start: number;
   chains: string;
   rule: string;
+  ruleGroup?: string;
   destinationPort: string;
   destinationIP: string;
   sourceIP: string;
@@ -71,6 +72,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
           conn.destinationIP,
           conn.chains,
           conn.rule,
+          conn.ruleGroup,
           conn.type,
           conn.network,
           conn.processPath,
@@ -82,13 +84,17 @@ function formatConnectionDataItem(
   i: ConnectionItem,
   prevKv: Record<string, { upload: number; download: number }>,
   now: number,
-  mutConnCtxRef: { hasProcessPath: boolean }
+  mutConnCtxRef: { hasProcessPath: boolean; hasRuleGroup: boolean }
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
   const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort } = metadata;
   const processPath = metadata.processPath;
+  const ruleGroup = i.ruleGroup;
   if (mutConnCtxRef.hasProcessPath === false && typeof processPath !== 'undefined') {
     mutConnCtxRef.hasProcessPath = true;
+  }
+  if (mutConnCtxRef.hasRuleGroup === false && typeof ruleGroup !== 'undefined') {
+    mutConnCtxRef.hasRuleGroup = true;
   }
 
   // host could be an empty string if it's direct IP connection
@@ -102,6 +108,7 @@ function formatConnectionDataItem(
     start: now - new Date(start).valueOf(),
     chains: chains.reverse().join(' / '),
     rule: !rulePayload ? rule : `${rule} (${rulePayload})`,
+    ruleGroup: ruleGroup?.length == 0 ? '' : ruleGroup?.reverse().join(' / '),
     ...metadata,
     host: `${host2}:${destinationPort}`,
     type: `${type}(${network})`,

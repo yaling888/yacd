@@ -35,7 +35,7 @@ const routes = [
   {
     path: '/connections',
     element: (
-      <MutableConnRefCtx.Provider value={{ hasProcessPath: false }}>
+      <MutableConnRefCtx.Provider value={{ hasProcessPath: false, hasRuleGroup: false }}>
         <Connections />
       </MutableConnRefCtx.Provider>
     ),

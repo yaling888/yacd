@@ -22,14 +22,12 @@ const fullColumns = [
   { Header: 'c_ul_speed', accessor: 'uploadSpeedCurr', sortDescFirst },
   { Header: 'c_chains', accessor: 'chains' },
   { Header: 'c_rule', accessor: 'rule' },
+  { Header: 'c_rule_group', accessor: 'ruleGroup' },
   { Header: 'c_time', accessor: 'start', sortDescFirst },
   { Header: 'c_source', accessor: 'source' },
   { Header: 'c_destination_ip', accessor: 'destinationIP' },
   { Header: 'c_type', accessor: 'type' },
 ];
-
-const columns = fullColumns;
-const columnsWithoutProcess = fullColumns.filter((item) => item.accessor !== 'process');
 
 function renderCell(cell: { column: { id: string }; value: number }, locale: Locale) {
   switch (cell.column.id) {
@@ -55,11 +53,31 @@ const tableState = {
   hiddenColumns: ['id'],
 };
 
+let hasProcessPath = true;
+let hasRuleGroup = true;
+let columnsFiltered = fullColumns;
+
 function Table({ data }) {
   const connCtx = React.useContext(MutableConnRefCtx);
+
+  if (hasProcessPath !== connCtx.hasProcessPath || hasRuleGroup !== connCtx.hasRuleGroup) {
+    if (!connCtx.hasProcessPath) {
+      columnsFiltered = columnsFiltered.filter((item) => item.accessor !== 'process');
+    }
+    if (!connCtx.hasRuleGroup) {
+      columnsFiltered = columnsFiltered.filter((item) => item.accessor !== 'ruleGroup');
+    }
+    if (hasProcessPath !== connCtx.hasProcessPath) {
+      hasProcessPath = connCtx.hasProcessPath;
+    }
+    if (hasRuleGroup !== connCtx.hasRuleGroup) {
+      hasRuleGroup = connCtx.hasRuleGroup;
+    }
+  }
+
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: connCtx.hasProcessPath ? columns : columnsWithoutProcess,
+      columns: columnsFiltered,
       data,
       initialState: tableState,
       autoResetSortBy: false,
@@ -67,6 +85,7 @@ function Table({ data }) {
     useSortBy
   );
 
+  const colsCount = columnsFiltered.length - 1;
   const { t, i18n } = useTranslation();
   const locale = i18n.language && i18n.language.indexOf('zh') > -1 ? zhCN : enUS;
 
@@ -75,7 +94,7 @@ function Table({ data }) {
       {...getTableProps()}
       style={{
         // @ts-ignore
-        '--col-count': connCtx.hasProcessPath ? '12' : '11',
+        '--col-count': colsCount,
       }}
     >
       {headerGroups.map((headerGroup, i) => {

@@ -31,6 +31,7 @@ export type ConnectionItem = {
   // e.g. 'Match', 'DomainKeyword'
   rule: string;
   rulePayload?: string;
+  ruleGroup?: string[];
 };
 type ConnectionsData = {
   downloadTotal: number;
@@ -44,7 +45,7 @@ function appendData(s: string) {
     o = JSON.parse(s);
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.log('JSON.parse error', JSON.parse(s));
+    console.log('JSON.parse error', err);
   }
   subscribers.forEach((f) => f(o));
 }
