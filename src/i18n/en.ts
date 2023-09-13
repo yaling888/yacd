@@ -54,7 +54,7 @@ export const data = {
   c_ul_speed: 'UP Speed',
   c_chains: 'Chains',
   c_rule: 'Rule',
-  c_rule_group: 'Rule Group',
+  c_rule_group: 'Rule Groups',
   c_time: 'Time',
   c_source: 'Source',
   c_destination_ip: 'Destination IP',

@@ -108,7 +108,7 @@ function formatConnectionDataItem(
     start: now - new Date(start).valueOf(),
     chains: chains.reverse().join(' / '),
     rule: !rulePayload ? rule : `${rule} (${rulePayload})`,
-    ruleGroup: ruleGroup?.length == 0 ? '' : ruleGroup?.reverse().join(' / '),
+    ruleGroup: (!ruleGroup || ruleGroup?.length === 0) ? '' : ruleGroup?.reverse().join(' / '),
     ...metadata,
     host: `${host2}:${destinationPort}`,
     type: `${type}(${network})`,
