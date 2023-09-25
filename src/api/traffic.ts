@@ -7,6 +7,8 @@ const textDecoder = new TextDecoder('utf-8');
 
 const Size = 150;
 
+type Traffic = { up: number; down: number };
+
 const traffic = {
   labels: Array(Size).fill(0),
   up: Array(Size),
@@ -14,7 +16,7 @@ const traffic = {
 
   size: Size,
   subscribers: [],
-  appendData(o: { up: number; down: number }) {
+  appendData(o: Traffic) {
     this.up.shift();
     this.down.shift();
     this.labels.shift();
@@ -24,7 +26,7 @@ const traffic = {
     this.down.push(o.down);
     this.labels.push(l);
 
-    this.subscribers.forEach((f) => f(o));
+    this.subscribers.forEach((f: (x: Traffic) => void) => f(o));
   },
 
   subscribe(listener: (x: any) => void) {
@@ -83,7 +85,10 @@ function fetchData(apiConfig: ClashAPIConfig) {
   const ws = new WebSocket(url);
 
   let frozenState = false;
-  const onFrozen = () => { frozenState = true; ws.close(); },
+  const onFrozen = () => {
+      frozenState = true;
+      ws.close();
+    },
     onResume = () => {
       frozenState = false;
 
@@ -133,7 +138,7 @@ function fetchDataWithFetch(apiConfig: ClashAPIConfig) {
       // eslint-disable-next-line no-console
       console.log('fetch /traffic error', err);
       fetched = false;
-    }
+    },
   );
   return traffic;
 }

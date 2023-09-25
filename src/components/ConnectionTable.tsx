@@ -1,71 +1,78 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from '@tanstack/react-table';
 import cx from 'clsx';
 import { formatDistance, Locale } from 'date-fns';
-import { enUS, zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale';
 import React from 'react';
 import { ChevronDown } from 'react-feather';
 import { useTranslation } from 'react-i18next';
-import { useSortBy, useTable } from 'react-table';
 
 import prettyBytes from '../misc/pretty-bytes';
 import s from './ConnectionTable.module.scss';
 import { MutableConnRefCtx } from './conns/ConnCtx';
 
-const sortDescFirst = true;
-
 const fullColumns = [
-  { accessor: 'id', show: false },
-  { Header: 'c_host', accessor: 'host' },
-  { Header: 'c_process', accessor: 'process' },
-  { Header: 'c_dl', accessor: 'download', sortDescFirst },
-  { Header: 'c_ul', accessor: 'upload', sortDescFirst },
-  { Header: 'c_dl_speed', accessor: 'downloadSpeedCurr', sortDescFirst },
-  { Header: 'c_ul_speed', accessor: 'uploadSpeedCurr', sortDescFirst },
-  { Header: 'c_chains', accessor: 'chains' },
-  { Header: 'c_rule', accessor: 'rule' },
-  { Header: 'c_rule_group', accessor: 'ruleGroup' },
-  { Header: 'c_time', accessor: 'start', sortDescFirst },
-  { Header: 'c_source', accessor: 'source' },
-  { Header: 'c_destination_ip', accessor: 'destinationIP' },
-  { Header: 'c_type', accessor: 'type' },
+  { header: 'Id', accessorKey: 'id' },
+  { header: 'c_host', accessorKey: 'host' },
+  { header: 'c_process', accessorKey: 'process' },
+  {
+    header: 'c_dl',
+    accessorKey: 'download',
+    cell: (info: any) => prettyBytes(info.getValue()),
+  },
+  {
+    header: 'c_ul',
+    accessorKey: 'upload',
+    cell: (info: any) => prettyBytes(info.getValue()),
+  },
+  {
+    header: 'c_dl_speed',
+    accessorKey: 'downloadSpeedCurr',
+    cell: (info: any) => prettyBytes(info.getValue()) + '/s',
+  },
+  {
+    header: 'c_ul_speed',
+    accessorKey: 'uploadSpeedCurr',
+    cell: (info: any) => prettyBytes(info.getValue()) + '/s',
+  },
+  { header: 'c_chains', accessorKey: 'chains' },
+  { header: 'c_rule', accessorKey: 'rule' },
+  { header: 'c_rule_group', accessorKey: 'ruleGroup' },
+  {
+    header: 'c_time',
+    accessorKey: 'start',
+    cell: (info: any) => formatDistance(info.getValue(), 0, { locale: getLocale() }),
+  },
+  { header: 'c_source', accessorKey: 'source' },
+  { header: 'c_destination_ip', accessorKey: 'destinationIP' },
+  { header: 'c_type', accessorKey: 'type' },
 ];
 
-function renderCell(cell: { column: { id: string }; value: number }, locale: Locale) {
-  switch (cell.column.id) {
-    case 'start':
-      return formatDistance(cell.value, 0, { locale: locale });
-    case 'download':
-    case 'upload':
-      return prettyBytes(cell.value);
-    case 'downloadSpeedCurr':
-    case 'uploadSpeedCurr':
-      return prettyBytes(cell.value) + '/s';
-    default:
-      return cell.value;
-  }
-}
+const COLUMN_SORT = [{ id: 'id', desc: true }];
 
-const sortById = { id: 'id', desc: true };
-const tableState = {
-  sortBy: [
-    // maintain a more stable order
-    sortById,
-  ],
-  hiddenColumns: ['id'],
-};
-
+let locale = enUS;
 let hasProcessPath = true;
 let hasRuleGroup = true;
 let columnsFiltered = fullColumns;
 
-function Table({ data }) {
+function getLocale(): Locale {
+  return locale;
+}
+
+function Table({ data }: { data: any }) {
   const connCtx = React.useContext(MutableConnRefCtx);
 
   if (hasProcessPath !== connCtx.hasProcessPath || hasRuleGroup !== connCtx.hasRuleGroup) {
     if (!connCtx.hasProcessPath) {
-      columnsFiltered = columnsFiltered.filter((item) => item.accessor !== 'process');
+      columnsFiltered = columnsFiltered.filter((item) => item.accessorKey !== 'process');
     }
     if (!connCtx.hasRuleGroup) {
-      columnsFiltered = columnsFiltered.filter((item) => item.accessor !== 'ruleGroup');
+      columnsFiltered = columnsFiltered.filter((item) => item.accessorKey !== 'ruleGroup');
     }
     if (hasProcessPath !== connCtx.hasProcessPath) {
       hasProcessPath = connCtx.hasProcessPath;
@@ -75,72 +82,72 @@ function Table({ data }) {
     }
   }
 
-  const { getTableProps, headerGroups, rows, prepareRow } = useTable(
-    {
-      columns: columnsFiltered,
-      data,
-      initialState: tableState,
-      autoResetSortBy: false,
+  const [sorting, setSorting] = React.useState<SortingState>(COLUMN_SORT);
+  const table = useReactTable({
+    columns: columnsFiltered,
+    data,
+    state: {
+      sorting,
+      columnVisibility: { id: false },
     },
-    useSortBy
-  );
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
-  const colsCount = columnsFiltered.length - 1;
   const { t, i18n } = useTranslation();
-  const locale = i18n.language && i18n.language.indexOf('zh') > -1 ? zhCN : enUS;
+  locale = i18n.language && i18n.language.indexOf('zh') > -1 ? zhCN : enUS;
 
   return (
-    <div
-      {...getTableProps()}
-      style={{
-        // @ts-ignore
-        '--col-count': colsCount,
-      }}
-    >
-      {headerGroups.map((headerGroup, i) => {
-        return (
-          <div key={i} {...headerGroup.getHeaderGroupProps()} className={s.tr}>
-            {headerGroup.headers.map((column, idx) => (
-              <div key={idx} {...column.getHeaderProps(column.getSortByToggleProps())} className={s.th}>
-                <span>{t(column.render('Header'))}</span>
-                <span className={s.sortIconContainer}>
-                  {column.isSorted ? (
-                    <span className={column.isSortedDesc ? '' : s.rotate180}>
-                      <ChevronDown size={16} />
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-            ))}
-
-            {rows.map((row, i) => {
-              prepareRow(row);
-              return row.cells.map((cell, j) => {
+    <table className={s.table}>
+      <thead>
+        {table.getHeaderGroups().map((headerGroup) => {
+          return (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
                 return (
-                  <div
-                    key={j}
-                    {...cell.getCellProps()}
-                    className={cx(
-                      s.td,
-                      i % 2 === 0 ? s.odd : false,
-                      connCtx.hasProcessPath
-                        ? j >= 2 && j <= 5
-                          ? s.du
-                          : false
-                        : j >= 1 && j <= 4
-                        ? s.du
-                        : false
-                    )}
+                  <th
+                    key={header.id}
+                    className={header.column.getCanSort() ? cx(s.th, s.pointer) : s.th}
+                    onClick={header.column.getToggleSortingHandler()}
                   >
-                    {renderCell(cell, locale)}
-                  </div>
+                    <span className={s.thWrap}>
+                      <span>
+                        {t(flexRender(header.column.columnDef.header, header.getContext()))}
+                      </span>
+                      {header.column.getIsSorted() ? (
+                        <span
+                          className={
+                            header.column.getIsSorted() === 'desc'
+                              ? s.sortIconContainer
+                              : cx(s.rotate180, s.sortIconContainer)
+                          }
+                        >
+                          <ChevronDown size={16} />
+                        </span>
+                      ) : null}
+                    </span>
+                  </th>
                 );
-              });
-            })}
-          </div>
-        );
-      })}
-    </div>
+              })}
+            </tr>
+          );
+        })}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => {
+          return (
+            <tr key={row.id}>
+              {row.getVisibleCells().map((cell) => {
+                return (
+                  <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 

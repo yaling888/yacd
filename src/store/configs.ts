@@ -1,4 +1,11 @@
-import { ClashGeneralConfig, DispatchFn, GetStateFn, State, StateConfigs, TunPartial } from 'src/store/types';
+import {
+  ClashGeneralConfig,
+  DispatchFn,
+  GetStateFn,
+  State,
+  StateConfigs,
+  TunPartial,
+} from 'src/store/types';
 import { ClashAPIConfig } from 'src/types';
 
 import * as configsAPI from '../api/configs';
@@ -53,11 +60,11 @@ function markHaveFetchedConfig() {
   };
 }
 
-type generalConfig = Omit<ClashGeneralConfig, 'tun'>
+type generalConfig = Omit<ClashGeneralConfig, 'tun'>;
 
 export function updateConfigs(
   apiConfig: ClashAPIConfig,
-  partialConfg: TunPartial<ClashGeneralConfig>
+  partialConfg: TunPartial<ClashGeneralConfig>,
 ) {
   return async (dispatch: DispatchFn) => {
     configsAPI
@@ -73,7 +80,7 @@ export function updateConfigs(
           // eslint-disable-next-line no-console
           console.log('Error update configs', err);
           throw err;
-        }
+        },
       )
       .then(() => {
         dispatch(fetchConfigs(apiConfig));
@@ -100,7 +107,7 @@ export function reloadConfigFile(apiConfig: ClashAPIConfig) {
           // eslint-disable-next-line no-console
           console.log('Error reload config file', err);
           throw err;
-        }
+        },
       )
       .then(() => {
         dispatch(fetchConfigs(apiConfig));
@@ -123,7 +130,7 @@ export function updateGeoDatabasesFile(apiConfig: ClashAPIConfig) {
           // eslint-disable-next-line no-console
           console.log('Error update geo databases file', err);
           throw err;
-        }
+        },
       )
       .then(() => {
         dispatch(fetchConfigs(apiConfig));
@@ -146,7 +153,7 @@ export function flushFakeIPPool(apiConfig: ClashAPIConfig) {
           // eslint-disable-next-line no-console
           console.log('Error flush FakeIP pool', err);
           throw err;
-        }
+        },
       )
       .then(() => {
         dispatch(fetchConfigs(apiConfig));

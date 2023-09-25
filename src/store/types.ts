@@ -23,7 +23,7 @@ export type ClashTunConfig = {
   'dns-hijack': string[];
   'auto-route': boolean;
   'auto-detect-interface': boolean;
-}
+};
 
 export type ClashGeneralConfig = {
   port: number;
@@ -41,7 +41,7 @@ export type ClashGeneralConfig = {
 
 export type TunPartial<T> = {
   [P in keyof T]?: T[P] extends ClashTunConfig ? TunPartial<T[P]> : T[P];
-}
+};
 
 ///// store.proxies
 
@@ -137,8 +137,6 @@ export type State = {
 export type GetStateFn = () => State;
 export interface DispatchFn {
   (msg: string, change: (s: State) => void): void;
-  (action: (dispatch: DispatchFn, getState: GetStateFn) => Promise<void>): ReturnType<
-    typeof action
-  >;
+  (action: (dispatch: DispatchFn, getState: GetStateFn) => Promise<void>): ReturnType<typeof action>;
   (action: (dispatch: DispatchFn, getState: GetStateFn) => void): ReturnType<typeof action>;
 }

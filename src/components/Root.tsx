@@ -1,14 +1,17 @@
 import './Root.scss';
 
 import { QueryClientProvider } from '@tanstack/react-query';
+import cx from 'clsx';
+import { useAtom } from 'jotai';
 import * as React from 'react';
 import { RouteObject } from 'react-router';
 import { HashRouter as Router, useRoutes } from 'react-router-dom';
-import { RecoilRoot } from 'recoil';
 import { About } from 'src/components/about/About';
 import Loading from 'src/components/Loading';
 import { Head } from 'src/components/shared/Head';
 import { queryClient } from 'src/misc/query';
+
+import { darkModePureBlackToggleAtom } from '$src/store/app';
 
 import { actions, initialState } from '../store';
 import APIConfig from './APIConfig';
@@ -73,22 +76,26 @@ function App() {
   ]);
 }
 
+function AppShell({ children }: { children: React.ReactNode }) {
+  const [pureBlackDark] = useAtom(darkModePureBlackToggleAtom);
+  const clazz = cx(s0.app, { pureBlackDark });
+  return <div className={clazz}>{children}</div>;
+}
+
 const Root = () => (
   <ErrorBoundary>
-    <RecoilRoot>
-      <StateProvider initialState={initialState} actions={actions}>
-        <QueryClientProvider client={queryClient}>
-          <Router>
-            <div className={s0.app}>
-              <Head />
-              <Suspense fallback={<Loading />}>
-                <App />
-              </Suspense>
-            </div>
-          </Router>
-        </QueryClientProvider>
-      </StateProvider>
-    </RecoilRoot>
+    <StateProvider initialState={initialState} actions={actions}>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <AppShell>
+            <Head />
+            <Suspense fallback={<Loading />}>
+              <App />
+            </Suspense>
+          </AppShell>
+        </Router>
+      </QueryClientProvider>
+    </StateProvider>
   </ErrorBoundary>
 );
 

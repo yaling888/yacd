@@ -1,4 +1,4 @@
-import { atom } from 'recoil';
+import { atom } from 'jotai';
 import { fetchVersion } from 'src/api/version';
 import {
   DelayMapping,
@@ -149,7 +149,7 @@ export function healthcheckProviderByName(apiConfig: ClashAPIConfig, name: strin
 async function closeGroupConns(
   apiConfig: ClashAPIConfig,
   groupName: string,
-  exceptionItemName: string
+  exceptionItemName: string,
 ) {
   const res = await connAPI.fetchConns(apiConfig);
   if (!res.ok) {
@@ -190,7 +190,7 @@ async function switchProxyImpl(
   getState: GetStateFn,
   apiConfig: ClashAPIConfig,
   groupName: string,
-  itemName: string
+  itemName: string,
 ) {
   try {
     const res = await proxiesAPI.requestToSwitchProxy(apiConfig, groupName, itemName);
@@ -224,7 +224,7 @@ function closeModalClosePrevConns() {
 function closePrevConns(
   apiConfig: ClashAPIConfig,
   proxies: ProxiesMapping,
-  switchTo: SwitchProxyCtxItem
+  switchTo: SwitchProxyCtxItem,
 ) {
   // we must have fetched the proxies before
   // so the proxies here is fresh
@@ -359,7 +359,7 @@ export function requestDelayAll(apiConfig: ClashAPIConfig) {
     const proxyNames = getDangleProxyNames(getState());
     const latencyTestUrl = getLatencyTestUrl(getState());
     await Promise.all(
-      proxyNames.map((p) => proxiesAPI.requestDelayForProxy(apiConfig, p, latencyTestUrl))
+      proxyNames.map((p) => proxiesAPI.requestDelayForProxy(apiConfig, p, latencyTestUrl)),
     );
     const proxyProviders = getProxyProviders(getState());
     // one by one
@@ -448,7 +448,4 @@ export const actions = {
   closePrevConnsAndTheModal,
 };
 
-export const proxyFilterText = atom({
-  key: 'proxyFilterText',
-  default: '',
-});
+export const proxyFilterTextAtom = atom('');

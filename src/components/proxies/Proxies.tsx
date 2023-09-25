@@ -9,11 +9,10 @@ import { ProxyPageFab } from 'src/components/proxies/ProxyPageFab';
 import { ProxyProviderList } from 'src/components/proxies/ProxyProviderList';
 import Settings from 'src/components/proxies/Settings';
 import BaseModal from 'src/components/shared/BaseModal';
-import { TextFilter } from '$src/components/shared/TextFilter';
 import { connect, useStoreActions } from 'src/components/StateProvider';
 import Equalizer from 'src/components/svg/Equalizer';
 import { getClashAPIConfig } from 'src/store/app';
-import { proxyFilterText } from 'src/store/proxies';
+import { proxyFilterTextAtom } from 'src/store/proxies';
 import {
   fetchClashVersion,
   fetchProxies,
@@ -22,7 +21,10 @@ import {
   getProxyProviders,
   getShowModalClosePrevConns,
 } from 'src/store/proxies';
-import type { State } from 'src/store/types';
+import type { DelayMapping, DispatchFn, FormattedProxyProvider, State } from 'src/store/types';
+
+import { TextFilter } from '$src/components/shared/TextFilter';
+import { ClashAPIConfig } from '$src/types';
 
 import s0 from './Proxies.module.scss';
 
@@ -35,6 +37,13 @@ function Proxies({
   proxyProviders,
   apiConfig,
   showModalClosePrevConns,
+}: {
+  dispatch: DispatchFn;
+  groupNames: string[];
+  delay: DelayMapping;
+  proxyProviders: FormattedProxyProvider[];
+  apiConfig: ClashAPIConfig;
+  showModalClosePrevConns: boolean;
 }) {
   const refFetchedTimestamp = useRef<{ startAt?: number; completeAt?: number }>({});
 
@@ -82,7 +91,7 @@ function Proxies({
         <ContentHeader title={t('Proxies')} />
         <div className={s0.topBarRight}>
           <div className={s0.textFilterContainer}>
-            <TextFilter textAtom={proxyFilterText} />
+            <TextFilter textAtom={proxyFilterTextAtom} />
           </div>
           <Tooltip label={t('settings')}>
             <Button kind="minimal" onClick={() => setIsSettingsModalOpen(true)}>

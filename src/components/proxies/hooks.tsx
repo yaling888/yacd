@@ -1,12 +1,12 @@
+import { useAtom } from 'jotai';
 import * as React from 'react';
-import { useRecoilState } from 'recoil';
 import {
   // types
   NonProxyTypes,
   // atom
-  proxyFilterText,
+  proxyFilterTextAtom,
 } from 'src/store/proxies';
-import { DelayMapping, ProxiesMapping, ProxyItem } from 'src/store/types';
+import { DelayMapping, ProxiesMapping, ProxyDelayItem, ProxyItem } from 'src/store/types';
 
 const { useMemo } = React;
 
@@ -16,7 +16,7 @@ function filterAvailableProxies(list: string[], delay: DelayMapping) {
     if (d === undefined) {
       return true;
     }
-    if (d.number === 0) {
+    if ('number' in d && d.number === 0) {
       return false;
     } else {
       return true;
@@ -24,15 +24,8 @@ function filterAvailableProxies(list: string[], delay: DelayMapping) {
   });
 }
 
-const getSortDelay = (
-  d:
-    | undefined
-    | {
-        number?: number;
-      },
-  proxyInfo: ProxyItem
-) => {
-  if (d && typeof d.number === 'number' && d.number > 0) {
+const getSortDelay = (d: undefined | ProxyDelayItem, proxyInfo: ProxyItem) => {
+  if (d && 'number' in d && d.number > 0) {
     return d.number;
   }
 
@@ -95,7 +88,7 @@ function filterAvailableProxiesAndSort(
   hideUnavailableProxies: boolean,
   filterText: string,
   proxySortBy: string,
-  proxies?: ProxiesMapping
+  proxies?: ProxiesMapping,
 ) {
   // all is freezed
   let filtered = [...all];
@@ -114,9 +107,9 @@ export function useFilteredAndSorted(
   delay: DelayMapping,
   hideUnavailableProxies: boolean,
   proxySortBy: string,
-  proxies?: ProxiesMapping
+  proxies?: ProxiesMapping,
 ) {
-  const [filterText] = useRecoilState(proxyFilterText);
+  const [filterText] = useAtom(proxyFilterTextAtom);
   return useMemo(
     () =>
       filterAvailableProxiesAndSort(
@@ -125,8 +118,8 @@ export function useFilteredAndSorted(
         hideUnavailableProxies,
         filterText,
         proxySortBy,
-        proxies
+        proxies,
       ),
-    [all, delay, hideUnavailableProxies, filterText, proxySortBy, proxies]
+    [all, delay, hideUnavailableProxies, filterText, proxySortBy, proxies],
   );
 }

@@ -7,6 +7,8 @@ import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { ConnectionItem } from 'src/api/connections';
 import { State } from 'src/store/types';
 
+import { ClashAPIConfig } from '$src/types';
+
 import * as connAPI from '../api/connections';
 import useRemainingViewPortHeight from '../hooks/useRemainingViewPortHeight';
 import { getClashAPIConfig } from '../store/app';
@@ -76,7 +78,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
           conn.type,
           conn.network,
           conn.processPath,
-        ].some((field) => hasSubstring(field, keyword))
+        ].some((field) => hasSubstring(field, keyword)),
       );
 }
 
@@ -84,7 +86,7 @@ function formatConnectionDataItem(
   i: ConnectionItem,
   prevKv: Record<string, { upload: number; download: number }>,
   now: number,
-  mutConnCtxRef: { hasProcessPath: boolean; hasRuleGroup: boolean }
+  mutConnCtxRef: { hasProcessPath: boolean; hasRuleGroup: boolean },
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
   const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort } = metadata;
@@ -108,7 +110,7 @@ function formatConnectionDataItem(
     start: now - new Date(start).valueOf(),
     chains: chains.reverse().join(' / '),
     rule: !rulePayload ? rule : `${rule} (${rulePayload})`,
-    ruleGroup: (!ruleGroup || ruleGroup?.length === 0) ? '' : ruleGroup?.reverse().join(' / '),
+    ruleGroup: !ruleGroup || ruleGroup?.length === 0 ? '' : ruleGroup?.reverse().join(' / '),
     ...metadata,
     host: `${host2}:${destinationPort}`,
     type: `${type}(${network})`,
@@ -134,7 +136,7 @@ function connQty({ qty }) {
   return qty < 100 ? '' + qty : '99+';
 }
 
-function Conn({ apiConfig }) {
+function Conn({ apiConfig }: { apiConfig: ClashAPIConfig }) {
   const [refContainer, containerHeight] = useRemainingViewPortHeight();
   const [conns, setConns] = useState([]);
   const [closedConns, setClosedConns] = useState([]);
@@ -157,7 +159,7 @@ function Conn({ apiConfig }) {
       const prevConnsKv = arrayToIdKv(prevConnsRef.current);
       const now = Date.now();
       const x = connections.map((c: ConnectionItem) =>
-        formatConnectionDataItem(c, prevConnsKv, now, connCtx)
+        formatConnectionDataItem(c, prevConnsKv, now, connCtx),
       );
       const closed = [];
       for (const c of prevConnsRef.current) {
@@ -177,7 +179,7 @@ function Conn({ apiConfig }) {
         prevConnsRef.current = x;
       }
     },
-    [setConns, isRefreshPaused, connCtx]
+    [setConns, isRefreshPaused, connCtx],
   );
   useEffect(() => {
     return connAPI.fetchData(apiConfig, read);

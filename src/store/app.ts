@@ -1,3 +1,4 @@
+import { atomWithStorage } from 'jotai/utils';
 import { DispatchFn, GetStateFn, State, StateApp } from 'src/store/types';
 
 import { ClashAPIConfig } from '$src/types';
@@ -6,6 +7,10 @@ import { loadState, saveState } from '../misc/storage';
 import { debounce, trimTrailingSlash } from '../misc/utils';
 import { fetchConfigs } from './configs';
 import { closeModal } from './modals';
+
+const STORAGE_KEY = {
+  darkModePureBlackToggle: 'yacd_darkModePureBlackToggle',
+};
 
 export const getClashAPIConfig = (s: State) => {
   const idx = s.app.selectedClashAPIConfigIndex;
@@ -26,7 +31,7 @@ const saveStateDebounced = debounce(saveState, 600);
 
 function findClashAPIConfigIndex(
   getState: GetStateFn,
-  { baseURL, secret, metaLabel }: ClashAPIConfig
+  { baseURL, secret, metaLabel }: ClashAPIConfig,
 ) {
   const arr = getClashAPIConfigs(getState());
   for (let i = 0; i < arr.length; i++) {
@@ -115,7 +120,7 @@ function insertThemeColorMeta(color: string, media?: string) {
 
 function updateMetaThemeColor(theme: ThemeType) {
   const metas = Array.from(
-    document.querySelectorAll('meta[name=theme-color]')
+    document.querySelectorAll('meta[name=theme-color]'),
   ) as HTMLMetaElement[];
   let meta0: HTMLMetaElement;
   for (const m of metas) {
@@ -222,23 +227,36 @@ const defaultState: StateApp = {
   logStreamingPaused: false,
 };
 
+const CONFIG_QUERY_PARAMS = ['hostname', 'port', 'secret', 'theme'];
+
 function parseConfigQueryString() {
   const { search } = window.location;
   const collector: Record<string, string> = {};
-  if (typeof search !== 'string' || search === '') return collector;
-  const qs = search.replace(/^\?/, '').split('&');
-  for (let i = 0; i < qs.length; i++) {
-    const [k, v] = qs[i].split('=');
-    collector[k] = encodeURIComponent(v);
+  const sp = new URLSearchParams(search);
+  let shouldUpdateAddressBar = false;
+  if (typeof search !== 'string' || search === '') {
+    return [collector, sp, shouldUpdateAddressBar] as const;
   }
-  return collector;
+  for (const key of CONFIG_QUERY_PARAMS) {
+    const v = sp.get(key);
+    if (v) {
+      shouldUpdateAddressBar = true;
+      collector[key] = v;
+      // sp can contain secret etc. and we better remove these
+      sp.delete(key);
+    }
+  }
+  return [collector, sp, shouldUpdateAddressBar] as const;
 }
 
 export function initialState() {
   let s = loadState();
   s = { ...defaultState, ...s };
-  const query = parseConfigQueryString();
-
+  const [query, sp, shouldUpdateAddressBar] = parseConfigQueryString();
+  if (shouldUpdateAddressBar && history?.replaceState) {
+    const target = location.pathname + location.hash + (sp.size > 0 ? `?${sp}` : '');
+    history.replaceState(null, '', target);
+  }
   const conf = s.clashAPIConfigs[s.selectedClashAPIConfigIndex];
   if (conf) {
     const url = new URL(conf.baseURL);
@@ -267,3 +285,8 @@ export function initialState() {
   setTheme(s.theme);
   return s;
 }
+
+export const darkModePureBlackToggleAtom = atomWithStorage(
+  STORAGE_KEY.darkModePureBlackToggle,
+  false,
+);

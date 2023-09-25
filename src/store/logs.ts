@@ -24,7 +24,7 @@ export const getLogsForDisplay = createSelector(
 
     if (searchText === '') return x;
     return x.filter((r) => r.payload.toLowerCase().indexOf(searchText) >= 0);
-  }
+  },
 );
 
 export function updateLogLevel(logLevel: string) {

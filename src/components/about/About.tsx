@@ -7,6 +7,8 @@ import { connect } from 'src/components/StateProvider';
 import { getClashAPIConfig } from 'src/store/app';
 import { ClashAPIConfig } from 'src/types';
 
+import { State } from '$src/store/types';
+
 import s from './About.module.scss';
 
 type Props = { apiConfig: ClashAPIConfig };
@@ -31,7 +33,7 @@ function Version({ name, link, version }: { name: string; link: string; version:
 
 function AboutImpl(props: Props) {
   const { data: version } = useQuery([props.apiConfig], () =>
-    fetchVersion(props.apiConfig)
+    fetchVersion(props.apiConfig),
   );
   return (
     <>
@@ -44,7 +46,7 @@ function AboutImpl(props: Props) {
   );
 }
 
-const mapState = (s) => ({
+const mapState = (s: State) => ({
   apiConfig: getClashAPIConfig(s),
 });
 

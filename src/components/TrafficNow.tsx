@@ -18,7 +18,7 @@ const mapState = (s: State) => ({
 });
 export default connect(mapState)(TrafficNow);
 
-function TrafficNow({ apiConfig }) {
+function TrafficNow({ apiConfig }: { apiConfig: ClashAPIConfig }) {
   const { t } = useTranslation();
   const { upStr, downStr } = useSpeed(apiConfig);
   const { upTotal, dlTotal, connNumber } = useConnection(apiConfig);
@@ -55,7 +55,7 @@ function useSpeed(apiConfig: ClashAPIConfig) {
       setSpeed({
         upStr: prettyBytes(o.up) + '/s',
         downStr: prettyBytes(o.down) + '/s',
-      })
+      }),
     );
   }, [apiConfig]);
   return speed;
@@ -75,7 +75,7 @@ function useConnection(apiConfig: ClashAPIConfig) {
         connNumber: connections.length,
       });
     },
-    [setState]
+    [setState],
   );
   useEffect(() => {
     return connAPI.fetchData(apiConfig, read);

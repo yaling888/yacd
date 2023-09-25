@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { State } from '$src/store/types';
+import { ClashAPIConfig } from '$src/types';
 
 import { fetchData } from '../api/traffic';
 import useLineChart from '../hooks/useLineChart';
@@ -24,7 +25,13 @@ const mapState = (s: State) => ({
 
 export default connect(mapState)(TrafficChart);
 
-function TrafficChart({ apiConfig, selectedChartStyleIndex }) {
+function TrafficChart({
+  apiConfig,
+  selectedChartStyleIndex,
+}: {
+  apiConfig: ClashAPIConfig;
+  selectedChartStyleIndex: number;
+}) {
   const ChartMod = chartJSResource.read();
   const traffic = fetchData(apiConfig);
   const { t } = useTranslation();
@@ -46,7 +53,7 @@ function TrafficChart({ apiConfig, selectedChartStyleIndex }) {
         },
       ],
     }),
-    [traffic, selectedChartStyleIndex, t]
+    [traffic, selectedChartStyleIndex, t],
   );
 
   useLineChart(ChartMod.Chart, 'trafficChart', data, traffic);

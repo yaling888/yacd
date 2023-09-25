@@ -1,3 +1,4 @@
+import { useAtom } from 'jotai';
 import * as React from 'react';
 import { DownloadCloud, LogOut, RotateCw, Trash2 } from 'react-feather';
 import { useTranslation } from 'react-i18next';
@@ -6,12 +7,25 @@ import Select from 'src/components/shared/Select';
 import { ClashGeneralConfig, DispatchFn, State } from 'src/store/types';
 import { ClashAPIConfig } from 'src/types';
 
-import { getClashAPIConfig, getLatencyTestUrl, getSelectedChartStyleIndex } from '../store/app';
-import { fetchConfigs, flushFakeIPPool, getConfigs, reloadConfigFile, updateConfigs, updateGeoDatabasesFile } from '../store/configs';
+import {
+  darkModePureBlackToggleAtom,
+  getClashAPIConfig,
+  getLatencyTestUrl,
+  getSelectedChartStyleIndex,
+} from '../store/app';
+import {
+  fetchConfigs,
+  flushFakeIPPool,
+  getConfigs,
+  reloadConfigFile,
+  updateConfigs,
+  updateGeoDatabasesFile,
+} from '../store/configs';
 import { openModal } from '../store/modals';
 import Button from './Button';
 import s0 from './Config.module.scss';
 import ContentHeader from './ContentHeader';
+import { Toggle } from './form/Toggle';
 import Input, { SelfControlledInput } from './Input';
 import { Selection2 } from './Selection';
 import { connect, useStoreActions } from './StateProvider';
@@ -70,10 +84,14 @@ const mapState2 = (s: State) => ({
 const Config = connect(mapState2)(ConfigImpl);
 export default connect(mapState)(ConfigContainer);
 
-function ConfigContainer({ dispatch, configs, apiConfig }: {
-  dispatch: DispatchFn,
-  configs: ClashGeneralConfig,
-  apiConfig: ClashAPIConfig,
+function ConfigContainer({
+  dispatch,
+  configs,
+  apiConfig,
+}: {
+  dispatch: DispatchFn;
+  configs: ClashGeneralConfig;
+  apiConfig: ClashAPIConfig;
 }) {
   useEffect(() => {
     dispatch(fetchConfigs(apiConfig));
@@ -113,7 +131,7 @@ function ConfigImpl({
     (name: keyof ClashGeneralConfig, val: ClashGeneralConfig[keyof ClashGeneralConfig]) => {
       setConfigStateInternal({ ...configState, [name]: val });
     },
-    [configState]
+    [configState],
   );
 
   const setTunConfigState = useCallback(
@@ -121,7 +139,7 @@ function ConfigImpl({
       const tun = {...configState.tun, [name]: val };
       setConfigStateInternal({ ...configState, tun: {...tun}});
     },
-    [configState]
+    [configState],
   );
 
   const handleChangeValue = useCallback(
@@ -156,12 +174,12 @@ function ConfigImpl({
           return;
       }
     },
-    [apiConfig, dispatch, setConfigState, setTunConfigState]
+    [apiConfig, dispatch, setConfigState, setTunConfigState],
   );
 
   const handleInputOnChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
     (e) => handleChangeValue(e.target),
-    [handleChangeValue]
+    [handleChangeValue],
   );
 
   const { selectChartStyleIndex, updateAppConfig } = useStoreActions();
@@ -189,7 +207,7 @@ function ConfigImpl({
           throw new Error(`unknown input name ${name}`);
       }
     },
-    [apiConfig, dispatch, updateAppConfig]
+    [apiConfig, dispatch, updateAppConfig],
   );
 
   const handleReloadConfigFile = useCallback(() => {
@@ -203,6 +221,8 @@ function ConfigImpl({
   const handleFlushFakeIPPool = useCallback(() => {
     dispatch(flushFakeIPPool(apiConfig));
   },[apiConfig, dispatch]);
+
+  const [pureBlack, setPureBlack] = useAtom(darkModePureBlackToggleAtom);
 
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language && i18n.language.indexOf('zh') > -1 ? 'zh' : 'en';
@@ -222,7 +242,7 @@ function ConfigImpl({
                 onBlur={handleInputOnBlur}
               />
             </div>
-          ) : null
+          ) : null,
         )}
 
         <div>
@@ -366,7 +386,6 @@ function ConfigImpl({
             onChange={selectChartStyleIndex}
           />
         </div>
-
         <div>
           <div className={s0.label}>
             {t('current_backend')}
@@ -377,6 +396,14 @@ function ConfigImpl({
             start={<LogOut size={16} />}
             label={t('switch_backend')}
             onClick={openAPIConfigModal}
+          />
+        </div>
+        <div className={s0.item}>
+          <Toggle
+            label={t('dark_mode_pure_black_toggle_label')}
+            id="dark-mode-pure-black-toggle"
+            checked={pureBlack}
+            onChange={(e) => setPureBlack(e.target.checked)}
           />
         </div>
       </div>

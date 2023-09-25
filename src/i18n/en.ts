@@ -40,6 +40,7 @@ export const data = {
   lang: '语言',
   update_all_rule_provider: 'Update all rule providers',
   update_all_proxy_provider: 'Update all proxy providers',
+  dark_mode_pure_black_toggle_label: 'Use pure black in dark mode',
   reload_config_file: 'Reload config file',
   update_geo_databases_file: 'Update GEO databases file',
   flush_fake_ip_pool: 'Flush fake-ip data',

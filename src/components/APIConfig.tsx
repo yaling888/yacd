@@ -75,7 +75,7 @@ function APIConfig({ dispatch }: { dispatch: DispatchFn }) {
 
       onConfirm();
     },
-    [onConfirm]
+    [onConfirm],
   );
 
   const detectApiServer = async () => {
