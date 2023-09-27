@@ -23,7 +23,7 @@ let even = false;
 let fetched = false;
 let decoded = '';
 let ws: WebSocket;
-let prevAppendLogFn: AppendLogFn;
+// let prevAppendLogFn: AppendLogFn;
 
 function appendData(s: string, callback: AppendLogFn) {
   let o: Partial<Log>;
@@ -95,7 +95,7 @@ let controller: AbortController;
 export function fetchLogs(apiConfig: LogsAPIConfig, appendLog: AppendLogFn) {
   if (apiConfig.logLevel === 'uninit') return;
   if (fetched || (ws && ws.readyState === WebSocketReadyState.Open)) return;
-  prevAppendLogFn = appendLog;
+  // prevAppendLogFn = appendLog;
   const url = buildLogsWebSocketURL(apiConfig, endpoint);
   ws = new WebSocket(url);
   ws.addEventListener('error', () => {
