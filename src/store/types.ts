@@ -14,6 +14,7 @@ export type StateApp = {
   hideUnavailableProxies: boolean;
   autoCloseOldConns: boolean;
   logStreamingPaused: boolean;
+  logLevel: string;
 };
 
 export type ClashTunConfig = {
@@ -105,7 +106,6 @@ export type Log = {
 };
 
 export type StateLogs = {
-  logLevel: string;
   searchText: string;
   logs: Log[];
   tail: number;

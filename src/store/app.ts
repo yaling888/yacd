@@ -26,6 +26,7 @@ export const getProxySortBy = (s: State) => s.app.proxySortBy;
 export const getHideUnavailableProxies = (s: State) => s.app.hideUnavailableProxies;
 export const getAutoCloseOldConns = (s: State) => s.app.autoCloseOldConns;
 export const getLogStreamingPaused = (s: State) => s.app.logStreamingPaused;
+export const getLogLevel = (s: State) => s.app.logLevel;
 
 const saveStateDebounced = debounce(saveState, 600);
 
@@ -225,6 +226,7 @@ const defaultState: StateApp = {
   hideUnavailableProxies: false,
   autoCloseOldConns: false,
   logStreamingPaused: false,
+  logLevel: 'info',
 };
 
 const CONFIG_QUERY_PARAMS = ['hostname', 'port', 'secret', 'theme'];

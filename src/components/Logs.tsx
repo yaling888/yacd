@@ -3,15 +3,15 @@ import * as React from 'react';
 import { Pause, Play } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { areEqual, FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import { fetchLogs, reconnect as reconnectLogs, stop as stopLogs } from 'src/api/logs';
+import { fetchLogs, stop as stopLogs } from 'src/api/logs';
 import ContentHeader from 'src/components/ContentHeader';
 import LogSearch from 'src/components/LogSearch';
 import Select from 'src/components/shared/Select';
 import { connect, useStoreActions } from 'src/components/StateProvider';
 import SvgYacd from 'src/components/SvgYacd';
 import useRemainingViewPortHeight from 'src/hooks/useRemainingViewPortHeight';
-import { getClashAPIConfig, getLogStreamingPaused } from 'src/store/app';
-import { appendLog, getLogLevel, getLogsForDisplay, updateLogLevel } from 'src/store/logs';
+import { getClashAPIConfig, getLogLevel, getLogStreamingPaused } from 'src/store/app';
+import { appendLog, getLogsForDisplay } from 'src/store/logs';
 import { DispatchFn, Log, State } from 'src/store/types';
 
 import { ClashAPIConfig } from '$src/types';
@@ -24,7 +24,6 @@ const logLeveOptions = [
   ['info', 'Info'],
   ['warning', 'Warning'],
   ['error', 'Error'],
-  ['silent', 'Silent'],
 ];
 
 const { useCallback, memo, useEffect, useRef } = React;
@@ -83,22 +82,29 @@ function Logs({
   logs: Log[];
   logStreamingPaused: boolean;
 }) {
+  const refFetch = useRef(0);
   const actions = useStoreActions();
   const toggleIsRefreshPaused = useCallback(() => {
-    logStreamingPaused ? reconnectLogs({ ...apiConfig, logLevel }) : stopLogs();
-    // being lazy here
-    // ideally we should check the result of previous operation before updating this
+    if (refFetch.current === 1) {
+      refFetch.current = 0;
+      stopLogs();
+    }
     actions.app.updateAppConfig('logStreamingPaused', !logStreamingPaused);
-  }, [apiConfig, logLevel, logStreamingPaused, actions.app]);
+  }, [logStreamingPaused, actions.app]);
 
-  const onChangeLogLevel = useCallback((e) => {
-    const level = e.target.value;
-    if (logLevel === level) return;
-    stopLogs();
-    dispatch(updateLogLevel(level));
-  }, [logLevel, dispatch]);
+  const onChangeLogLevel = useCallback(
+    (e) => {
+      const level = e.target.value;
+      if (logLevel === level) return;
+      if (refFetch.current === 1) {
+        refFetch.current = 0;
+        stopLogs();
+      }
+      actions.app.updateAppConfig('logLevel', level);
+    },
+    [logLevel, actions.app],
+  );
 
-  const refFetch = useRef(0);
   const appendLogInternal = useCallback((log: Log) => dispatch(appendLog(log)), [dispatch]);
   useEffect(() => {
     return () => {
@@ -110,11 +116,12 @@ function Logs({
   }, []);
 
   useEffect(() => {
+    if (logStreamingPaused) return;
     if (refFetch.current === 0) {
       refFetch.current = 1;
     }
     fetchLogs({ ...apiConfig, logLevel }, appendLogInternal);
-  }, [apiConfig, logLevel, appendLogInternal]);
+  }, [logStreamingPaused, apiConfig, logLevel, appendLogInternal]);
 
   const [refLogsContainer, containerHeight] = useRemainingViewPortHeight();
   const { t } = useTranslation();
@@ -124,11 +131,7 @@ function Logs({
       <ContentHeader title={t('Logs')} />
       <div className={s.search}>
         <div className={s.logLevel}>
-          <Select
-              options={logLeveOptions}
-              selected={logLevel}
-              onChange={onChangeLogLevel}
-          />
+          <Select options={logLeveOptions} selected={logLevel} onChange={onChangeLogLevel} />
         </div>
         <div className={s.searchBox}>
           <LogSearch />
@@ -141,6 +144,13 @@ function Logs({
               <SvgYacd width={200} height={200} />
             </div>
             <div>{t('no_logs')}</div>
+            <Fab
+              icon={logStreamingPaused ? <Play size={16} /> : <Pause size={16} />}
+              mainButtonStyles={logStreamingPaused ? { background: '#e74c3c' } : {}}
+              style={fabPosition}
+              text={logStreamingPaused ? t('Resume Refresh') : t('Pause Refresh')}
+              onClick={toggleIsRefreshPaused}
+            ></Fab>
           </div>
         ) : (
           <div className={s.logsWrapper}>

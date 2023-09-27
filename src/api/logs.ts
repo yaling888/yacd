@@ -111,12 +111,12 @@ export function stop() {
   if (controller) controller.abort();
 }
 
-export function reconnect(apiConfig: LogsAPIConfig) {
-  if (!prevAppendLogFn || !ws) return;
-  ws.close();
-  fetched = false;
-  fetchLogs(apiConfig, prevAppendLogFn);
-}
+// export function reconnect(apiConfig: LogsAPIConfig) {
+//   if (!prevAppendLogFn || !ws) return;
+//   ws.close();
+//   fetched = false;
+//   fetchLogs(apiConfig, prevAppendLogFn);
+// }
 
 function fetchLogsWithFetch(apiConfig: LogsAPIConfig, appendLog: AppendLogFn) {
   if (controller && makeConnStr(apiConfig) !== prevConnStr) {

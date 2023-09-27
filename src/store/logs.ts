@@ -5,7 +5,6 @@ const LogSize = 300;
 
 const getLogs = (s: State) => s.logs.logs;
 const getTail = (s: State) => s.logs.tail;
-export const getLogLevel = (s: State) => s.logs.logLevel;
 export const getSearchText = (s: State) => s.logs.searchText;
 export const getLogsForDisplay = createSelector(
   getLogs,
@@ -26,14 +25,6 @@ export const getLogsForDisplay = createSelector(
     return x.filter((r) => r.payload.toLowerCase().indexOf(searchText) >= 0);
   },
 );
-
-export function updateLogLevel(logLevel: string) {
-  return (dispatch: DispatchFn) => {
-    dispatch('logsUpdateLogLevel', (s) => {
-      s.logs.logLevel = logLevel;
-    });
-  };
-}
 
 export function updateSearchText(text: string) {
   return (dispatch: DispatchFn) => {
@@ -59,7 +50,6 @@ export function appendLog(log: Log) {
 }
 
 export const initialState = {
-  logLevel: 'info',
   searchText: '',
   logs: [],
   // tail's initial value must be -1
