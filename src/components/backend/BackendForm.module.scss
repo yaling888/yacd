@@ -1,18 +1,14 @@
-.root {
-  &:focus {
-    outline: none;
-  }
-}
-
 .header {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 15px;
 
   .icon {
-    --stroke: #f3f3f3;
+    --stroke: var(--color-text-secondary);
+
     color: #20497e;
-    opacity: 0.7;
+    opacity: 0.4;
     transition: opacity 400ms;
     &:hover {
       opacity: 1;
@@ -42,6 +38,7 @@
   height: 20px;
   font-size: 0.8em;
   color: #ff8b8b;
+  margin-bottom: 5px;
 }
 
 .footer {

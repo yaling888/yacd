@@ -33,3 +33,10 @@ export function pad0(number: number | string, len: number): string {
   }
   return output;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const noop = () => {};
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

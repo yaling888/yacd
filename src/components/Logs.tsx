@@ -1,20 +1,20 @@
 import cx from 'clsx';
+import { useAtom } from 'jotai';
 import * as React from 'react';
 import { Pause, Play } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { areEqual, FixedSizeList as List, ListChildComponentProps } from 'react-window';
+// import { fetchLogs, reconnect as reconnectLogs, stop as stopLogs } from 'src/api/logs';
 import { fetchLogs, stop as stopLogs } from 'src/api/logs';
-import ContentHeader from 'src/components/ContentHeader';
+import { ContentHeader } from 'src/components/ContentHeader';
 import LogSearch from 'src/components/LogSearch';
 import Select from 'src/components/shared/Select';
-import { connect, useStoreActions } from 'src/components/StateProvider';
+import { connect } from 'src/components/StateProvider';
 import SvgYacd from 'src/components/SvgYacd';
 import useRemainingViewPortHeight from 'src/hooks/useRemainingViewPortHeight';
-import { getClashAPIConfig, getLogLevel, getLogStreamingPaused } from 'src/store/app';
+import { logLevelAtom, logStreamingPausedAtom, useApiConfig } from 'src/store/app';
 import { appendLog, getLogsForDisplay } from 'src/store/logs';
 import { DispatchFn, Log, State } from 'src/store/types';
-
-import { ClashAPIConfig } from '$src/types';
 
 import s from './Logs.module.scss';
 import { Fab, position as fabPosition } from './shared/Fab';
@@ -35,8 +35,6 @@ const colors = {
   warning: '#b99105',
   error: '#c11c1c',
 };
-
-// type LogLineProps = Partial<Log>;
 
 function LogLine({ time, even, payload, type }: Log) {
   const className = cx({ even }, 'log');
@@ -69,28 +67,22 @@ const Row = memo(({ index, style, data }: ListChildComponentProps<Log[]>) => {
 
 Row.displayName = 'MemoRow';
 
-function Logs({
-  dispatch,
-  logLevel,
-  apiConfig,
-  logs,
-  logStreamingPaused,
-}: {
-  dispatch: DispatchFn;
-  logLevel: string;
-  apiConfig: ClashAPIConfig;
-  logs: Log[];
-  logStreamingPaused: boolean;
-}) {
+function Logs({ dispatch, logs }: { dispatch: DispatchFn; logs: Log[] }) {
   const refFetch = useRef(0);
-  const actions = useStoreActions();
+  const [logLevel, setLogLevel] = useAtom(logLevelAtom);
+  const [logStreamingPaused, setLogStreamingPaused] = useAtom(logStreamingPausedAtom);
+  const apiConfig = useApiConfig();
   const toggleIsRefreshPaused = useCallback(() => {
+    // logStreamingPaused ? reconnectLogs({ ...apiConfig, logLevel }) : stopLogs();
+    // being lazy here
+    // ideally we should check the result of previous operation before updating this
     if (refFetch.current === 1) {
       refFetch.current = 0;
       stopLogs();
     }
-    actions.app.updateAppConfig('logStreamingPaused', !logStreamingPaused);
-  }, [logStreamingPaused, actions.app]);
+    setLogStreamingPaused(!logStreamingPaused);
+    // }, [apiConfig, logLevel, logStreamingPaused, setLogStreamingPaused]);
+  }, [logStreamingPaused, setLogStreamingPaused]);
 
   const onChangeLogLevel = useCallback(
     (e) => {
@@ -100,9 +92,9 @@ function Logs({
         refFetch.current = 0;
         stopLogs();
       }
-      actions.app.updateAppConfig('logLevel', level);
+      setLogLevel(level);
     },
-    [logLevel, actions.app],
+    [logLevel, setLogLevel],
   );
 
   const appendLogInternal = useCallback((log: Log) => dispatch(appendLog(log)), [dispatch]);
@@ -181,9 +173,6 @@ function Logs({
 
 const mapState = (s: State) => ({
   logs: getLogsForDisplay(s),
-  logLevel: getLogLevel(s),
-  apiConfig: getClashAPIConfig(s),
-  logStreamingPaused: getLogStreamingPaused(s),
 });
 
 export default connect(mapState)(Logs);

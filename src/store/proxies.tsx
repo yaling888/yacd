@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { atom } from 'jotai';
 import { fetchVersion } from 'src/api/version';
 import {
@@ -17,7 +18,6 @@ import { ClashAPIConfig } from 'src/types';
 
 import * as connAPI from '../api/connections';
 import * as proxiesAPI from '../api/proxies';
-import { getAutoCloseOldConns, getLatencyTestUrl } from './app';
 
 export const initialState: StateProxies = {
   proxies: {},
@@ -60,7 +60,7 @@ function mapLatency(names: string[], getProxy: (name: string) => { history: Late
   for (const name of names) {
     const p = getProxy(name) || { history: [] };
     const history = p.history;
-    const h = history[history.length - 1];
+    const h = history?.at?.(-1);
     if (h && typeof h.delay === 'number') {
       result[name] = { kind: 'Result', number: h.delay };
     }
@@ -191,6 +191,7 @@ async function switchProxyImpl(
   apiConfig: ClashAPIConfig,
   groupName: string,
   itemName: string,
+  autoCloseOldConns: boolean,
 ) {
   try {
     const res = await proxiesAPI.requestToSwitchProxy(apiConfig, groupName, itemName);
@@ -204,7 +205,6 @@ async function switchProxyImpl(
   }
 
   dispatch(fetchProxies(apiConfig));
-  const autoCloseOldConns = getAutoCloseOldConns(getState());
   if (autoCloseOldConns) {
     // use fresh state
     const proxies = getProxies(getState());
@@ -254,10 +254,17 @@ function closePrevConnsAndTheModal(apiConfig: ClashAPIConfig) {
   };
 }
 
-export function switchProxy(apiConfig: ClashAPIConfig, groupName: string, itemName: string) {
+export function switchProxy(
+  apiConfig: ClashAPIConfig,
+  groupName: string,
+  itemName: string,
+  autoCloseOldConns: boolean,
+) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
     // switch proxy asynchronously
-    switchProxyImpl(dispatch, getState, apiConfig, groupName, itemName).catch(noop);
+    switchProxyImpl(dispatch, getState, apiConfig, groupName, itemName, autoCloseOldConns).catch(
+      noop,
+    );
 
     // optimistic UI update
     dispatch('store/proxies#switchProxy', (s) => {
@@ -269,13 +276,11 @@ export function switchProxy(apiConfig: ClashAPIConfig, groupName: string, itemNa
   };
 }
 
-function requestDelayForProxyOnce(apiConfig: ClashAPIConfig, name: string) {
+function requestDelayForProxyOnce(apiConfig: ClashAPIConfig, name: string, latencyTestUrl: string) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
     dispatch('set latency state to testing in progress', (s) => {
       s.proxies.delay = { ...getDelay(getState()), [name]: { kind: 'Testing' } };
     });
-
-    const latencyTestUrl = getLatencyTestUrl(getState());
 
     try {
       const res = await proxiesAPI.requestDelayForProxy(apiConfig, name, latencyTestUrl);
@@ -303,13 +308,21 @@ function requestDelayForProxyOnce(apiConfig: ClashAPIConfig, name: string) {
   };
 }
 
-export function requestDelayForProxy(apiConfig: ClashAPIConfig, name: string) {
+export function requestDelayForProxy(
+  apiConfig: ClashAPIConfig,
+  name: string,
+  latencyTestUrl: string,
+) {
   return async (dispatch: DispatchFn) => {
-    await dispatch(requestDelayForProxyOnce(apiConfig, name));
+    await dispatch(requestDelayForProxyOnce(apiConfig, name, latencyTestUrl));
   };
 }
 
-export function requestDelayForProxies(apiConfig: ClashAPIConfig, names: string[]) {
+export function requestDelayForProxies(
+  apiConfig: ClashAPIConfig,
+  names: string[],
+  latencyTestUrl: string,
+) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
     const isPlusPro = isClashPlusPro(getState());
     const proxyDedupMap = new Map<string, boolean>();
@@ -318,7 +331,7 @@ export function requestDelayForProxies(apiConfig: ClashAPIConfig, names: string[
       names.forEach((name) => {
         if (!proxyDedupMap.get(name)) {
           proxyDedupMap.set(name, true);
-          dispatch(requestDelayForProxyOnce(apiConfig, name));
+          dispatch(requestDelayForProxyOnce(apiConfig, name, latencyTestUrl));
         }
       });
     } else {
@@ -332,7 +345,7 @@ export function requestDelayForProxies(apiConfig: ClashAPIConfig, names: string[
         if (!p.__provider) {
           if (!proxyDedupMap.get(name)) {
             proxyDedupMap.set(name, true);
-            dispatch(requestDelayForProxyOnce(apiConfig, name));
+            dispatch(requestDelayForProxyOnce(apiConfig, name, latencyTestUrl));
           }
         } else if (p.__provider) {
           if (!proxyDedupMap.get(name)) {
@@ -354,10 +367,9 @@ export function requestDelayForProxies(apiConfig: ClashAPIConfig, names: string[
   };
 }
 
-export function requestDelayAll(apiConfig: ClashAPIConfig) {
+export function requestDelayAll(apiConfig: ClashAPIConfig, latencyTestUrl: string) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
     const proxyNames = getDangleProxyNames(getState());
-    const latencyTestUrl = getLatencyTestUrl(getState());
     await Promise.all(
       proxyNames.map((p) => proxiesAPI.requestDelayForProxy(apiConfig, p, latencyTestUrl)),
     );
@@ -372,7 +384,7 @@ export function requestDelayAll(apiConfig: ClashAPIConfig) {
 
 export function fetchClashVersion(apiConfig: ClashAPIConfig) {
   return async (dispatch: DispatchFn) => {
-    const clashVersion = await fetchVersion(apiConfig);
+    const { data: clashVersion } = useQuery(['/version', apiConfig], fetchVersion);
     const isPlusPro = clashVersion.version && clashVersion.version.indexOf('PlusPro') > -1;
     dispatch('updateIsPlusPro', (s: State) => {
       s.proxies.isPlusPro = isPlusPro;

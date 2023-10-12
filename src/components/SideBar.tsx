@@ -5,8 +5,8 @@ import { Info } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { FcAreaChart, FcDocument, FcGlobe, FcLink, FcRuler, FcSettings } from 'react-icons/fc';
 import { Link, useLocation } from 'react-router-dom';
-import { ThemeSwitcher } from 'src/components/shared/ThemeSwitcher';
 
+import { ThemeSwitcher } from './shared/ThemeSwitcher';
 import s from './SideBar.module.scss';
 
 const icons = {
@@ -42,36 +42,12 @@ interface SideBarRowProps {
 }
 
 const pages = [
-  {
-    to: '/',
-    iconId: 'activity',
-    labelText: 'Overview',
-  },
-  {
-    to: '/proxies',
-    iconId: 'globe',
-    labelText: 'Proxies',
-  },
-  {
-    to: '/rules',
-    iconId: 'command',
-    labelText: 'Rules',
-  },
-  {
-    to: '/connections',
-    iconId: 'link',
-    labelText: 'Conns',
-  },
-  {
-    to: '/configs',
-    iconId: 'settings',
-    labelText: 'Config',
-  },
-  {
-    to: '/logs',
-    iconId: 'file',
-    labelText: 'Logs',
-  },
+  { to: '/', iconId: 'activity', labelText: 'Overview' },
+  { to: '/proxies', iconId: 'globe', labelText: 'Proxies' },
+  { to: '/rules', iconId: 'command', labelText: 'Rules' },
+  { to: '/connections', iconId: 'link', labelText: 'Conns' },
+  { to: '/configs', iconId: 'settings', labelText: 'Config' },
+  { to: '/logs', iconId: 'file', labelText: 'Logs' },
 ];
 
 export default function SideBar() {

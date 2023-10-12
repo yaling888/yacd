@@ -1,12 +1,11 @@
+import { useAtom } from 'jotai';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import Select from 'src/components/shared/Select';
 
-import { State, StateApp } from '$src/store/types';
+import { ToggleInput } from '$src/components/form/Toggle';
+import Select from '$src/components/shared/Select';
+import { autoCloseOldConnsAtom, hideUnavailableProxiesAtom, proxySortByAtom } from '$src/store/app';
 
-import { getAutoCloseOldConns, getHideUnavailableProxies, getProxySortBy } from '../../store/app';
-import { connect, useStoreActions } from '../StateProvider';
-import Switch from '../SwitchThemed';
 import s from './Settings.module.scss';
 
 const options = [
@@ -19,23 +18,20 @@ const options = [
 
 const { useCallback } = React;
 
-function Settings({ appConfig }: { appConfig: StateApp }) {
-  const {
-    app: { updateAppConfig },
-  } = useStoreActions();
-
+export default function Settings() {
+  const [autoCloseOldConns, setAutoCloseOldConns] = useAtom(autoCloseOldConnsAtom);
+  const [proxySortBy, setProxySortBy] = useAtom(proxySortByAtom);
+  const [hideUnavailableProxies, setHideUnavailableProxies] = useAtom(hideUnavailableProxiesAtom);
   const handleProxySortByOnChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      updateAppConfig('proxySortBy', e.target.value);
-    },
-    [updateAppConfig],
+    (e: React.ChangeEvent<HTMLSelectElement>) => setProxySortBy(e.target.value),
+    [setProxySortBy],
   );
 
   const handleHideUnavailablesSwitchOnChange = useCallback(
     (v: boolean) => {
-      updateAppConfig('hideUnavailableProxies', v);
+      setHideUnavailableProxies(v);
     },
-    [updateAppConfig],
+    [setHideUnavailableProxies],
   );
   const { t } = useTranslation();
   return (
@@ -47,47 +43,32 @@ function Settings({ appConfig }: { appConfig: StateApp }) {
             options={options.map((o) => {
               return [o[0], t(o[1])];
             })}
-            selected={appConfig.proxySortBy}
+            selected={proxySortBy}
             onChange={handleProxySortByOnChange}
           />
         </div>
       </div>
       <hr />
       <div className={s.labeledInput}>
-        <span>{t('hide_unavail_proxies')}</span>
+        <label htmlFor="hideUnavailableProxies">{t('hide_unavail_proxies')}</label>
         <div>
-          <Switch
-            name="hideUnavailableProxies"
-            checked={appConfig.hideUnavailableProxies}
+          <ToggleInput
+            id="hideUnavailableProxies"
+            checked={hideUnavailableProxies}
             onChange={handleHideUnavailablesSwitchOnChange}
           />
         </div>
       </div>
       <div className={s.labeledInput}>
-        <span>{t('auto_close_conns')}</span>
+        <label htmlFor="autoCloseOldConns">{t('auto_close_conns')}</label>
         <div>
-          <Switch
-            name="autoCloseOldConns"
-            checked={appConfig.autoCloseOldConns}
-            onChange={(v: boolean) => updateAppConfig('autoCloseOldConns', v)}
+          <ToggleInput
+            id="autoCloseOldConns"
+            checked={autoCloseOldConns}
+            onChange={setAutoCloseOldConns}
           />
         </div>
       </div>
     </>
   );
 }
-
-const mapState = (s: State) => {
-  const proxySortBy = getProxySortBy(s);
-  const hideUnavailableProxies = getHideUnavailableProxies(s);
-  const autoCloseOldConns = getAutoCloseOldConns(s);
-
-  return {
-    appConfig: {
-      proxySortBy,
-      hideUnavailableProxies,
-      autoCloseOldConns,
-    },
-  };
-};
-export default connect(mapState)(Settings);

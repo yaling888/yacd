@@ -5,20 +5,17 @@ import { Pause, Play, X as IconClose } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { ConnectionItem } from 'src/api/connections';
-import { State } from 'src/store/types';
 
-import { ClashAPIConfig } from '$src/types';
+import { useApiConfig } from '$src/store/app';
 
 import * as connAPI from '../api/connections';
 import useRemainingViewPortHeight from '../hooks/useRemainingViewPortHeight';
-import { getClashAPIConfig } from '../store/app';
 import s from './Connections.module.scss';
 import ConnectionTable from './ConnectionTable';
 import { MutableConnRefCtx } from './conns/ConnCtx';
-import ContentHeader from './ContentHeader';
+import { ContentHeader } from './ContentHeader';
 import ModalCloseAllConnections from './ModalCloseAllConnections';
 import { Action, Fab, position as fabPosition } from './shared/Fab';
-import { connect } from './StateProvider';
 import SvgYacd from './SvgYacd';
 
 const { useEffect, useState, useRef, useCallback } = React;
@@ -82,7 +79,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
       );
 }
 
-function formatConnectionDataItem(
+function fmtConnItem(
   i: ConnectionItem,
   prevKv: Record<string, { upload: number; download: number }>,
   now: number,
@@ -100,8 +97,7 @@ function formatConnectionDataItem(
   }
 
   // host could be an empty string if it's direct IP connection
-  let host2 = host;
-  if (host2 === '') host2 = destinationIP;
+  const host2 = host || destinationIP || '';
   const prev = prevKv[id];
   const ret = {
     id,
@@ -136,7 +132,8 @@ function connQty({ qty }) {
   return qty < 100 ? '' + qty : '99+';
 }
 
-function Conn({ apiConfig }: { apiConfig: ClashAPIConfig }) {
+export default function Conn() {
+  const apiConfig = useApiConfig();
   const [refContainer, containerHeight] = useRemainingViewPortHeight();
   const [conns, setConns] = useState([]);
   const [closedConns, setClosedConns] = useState([]);
@@ -155,15 +152,13 @@ function Conn({ apiConfig }: { apiConfig: ClashAPIConfig }) {
   const prevConnsRef = useRef(conns);
   const connCtx = React.useContext(MutableConnRefCtx);
   const read = useCallback(
-    ({ connections }) => {
+    ({ connections }: { connections: ConnectionItem[] }) => {
       const prevConnsKv = arrayToIdKv(prevConnsRef.current);
       const now = Date.now();
-      const x = connections.map((c: ConnectionItem) =>
-        formatConnectionDataItem(c, prevConnsKv, now, connCtx),
-      );
+      const x = connections.map((c) => fmtConnItem(c, prevConnsKv, now, connCtx));
       const closed = [];
       for (const c of prevConnsRef.current) {
-        const idx = x.findIndex((conn: ConnectionItem) => conn.id === c.id);
+        const idx = x.findIndex((conn) => conn.id === c.id);
         if (idx < 0) closed.push(c);
       }
       setClosedConns((prev) => {
@@ -252,9 +247,3 @@ function Conn({ apiConfig }: { apiConfig: ClashAPIConfig }) {
     </div>
   );
 }
-
-const mapState = (s: State) => ({
-  apiConfig: getClashAPIConfig(s),
-});
-
-export default connect(mapState)(Conn);

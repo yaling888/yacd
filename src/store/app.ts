@@ -1,115 +1,82 @@
+import { atom, useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { DispatchFn, GetStateFn, State, StateApp } from 'src/store/types';
 
+import { loadState } from '$src/misc/storage';
+import { trimTrailingSlash } from '$src/misc/utils';
+import { StateApp, ThemeType } from '$src/store/types';
 import { ClashAPIConfig } from '$src/types';
 
-import { loadState, saveState } from '../misc/storage';
-import { debounce, trimTrailingSlash } from '../misc/utils';
-import { fetchConfigs } from './configs';
-import { closeModal } from './modals';
+let iState: StateApp;
 
 const STORAGE_KEY = {
   darkModePureBlackToggle: 'yacd_darkModePureBlackToggle',
 };
 
-export const getClashAPIConfig = (s: State) => {
-  const idx = s.app.selectedClashAPIConfigIndex;
-  return s.app.clashAPIConfigs[idx];
+const rootEl = document.querySelector('html');
+
+const defaultClashAPIConfig = {
+  baseURL: document.getElementById('app')?.getAttribute('data-base-url') ?? 'http://127.0.0.1:9090',
+  secret: '',
+  addedAt: 0,
 };
-export const getSelectedClashAPIConfigIndex = (s: State) => s.app.selectedClashAPIConfigIndex;
-export const getClashAPIConfigs = (s: State) => s.app.clashAPIConfigs;
-export const getTheme = (s: State) => s.app.theme;
-export const getSelectedChartStyleIndex = (s: State) => s.app.selectedChartStyleIndex;
-export const getLatencyTestUrl = (s: State) => s.app.latencyTestUrl;
-export const getCollapsibleIsOpen = (s: State) => s.app.collapsibleIsOpen;
-export const getProxySortBy = (s: State) => s.app.proxySortBy;
-export const getHideUnavailableProxies = (s: State) => s.app.hideUnavailableProxies;
-export const getAutoCloseOldConns = (s: State) => s.app.autoCloseOldConns;
-export const getLogStreamingPaused = (s: State) => s.app.logStreamingPaused;
-export const getLogLevel = (s: State) => s.app.logLevel;
 
-const saveStateDebounced = debounce(saveState, 600);
+const defaultState: StateApp = {
+  selectedClashAPIConfigIndex: 0,
+  clashAPIConfigs: [defaultClashAPIConfig],
 
-function findClashAPIConfigIndex(
-  getState: GetStateFn,
-  { baseURL, secret, metaLabel }: ClashAPIConfig,
-) {
-  const arr = getClashAPIConfigs(getState());
+  latencyTestUrl: 'http://www.gstatic.com/generate_204',
+  selectedChartStyleIndex: 0,
+  theme: 'dark',
+
+  // type { [string]: boolean }
+  collapsibleIsOpen: {},
+  // how proxies are sorted in a group or provider
+  proxySortBy: 'Natural',
+  hideUnavailableProxies: false,
+  autoCloseOldConns: false,
+  logStreamingPaused: false,
+  logLevel: 'info',
+};
+
+const CONFIG_QUERY_PARAMS = ['hostname', 'port', 'secret', 'theme'];
+
+// atoms
+
+export const selectedClashAPIConfigIndexAtom = atom(initialState().selectedClashAPIConfigIndex);
+export const clashAPIConfigsAtom = atom(initialState().clashAPIConfigs);
+export const latencyTestUrlAtom = atom(initialState().latencyTestUrl);
+export const selectedChartStyleIndexAtom = atom(initialState().selectedChartStyleIndex);
+export const themeAtom = atom(initialState().theme);
+export const collapsibleIsOpenAtom = atom(initialState().collapsibleIsOpen);
+export const proxySortByAtom = atom(initialState().proxySortBy);
+export const hideUnavailableProxiesAtom = atom(initialState().hideUnavailableProxies);
+export const autoCloseOldConnsAtom = atom(initialState().autoCloseOldConns);
+export const logStreamingPausedAtom = atom(initialState().logStreamingPaused);
+export const logLevelAtom = atom(initialState().logLevel);
+
+// prettier-ignore
+export const darkModePureBlackToggleAtom = atomWithStorage(STORAGE_KEY.darkModePureBlackToggle, false);
+
+// hooks
+
+export function useApiConfig() {
+  const [apiConfigs] = useAtom(clashAPIConfigsAtom);
+  const [idx] = useAtom(selectedClashAPIConfigIndexAtom);
+  return apiConfigs[idx];
+}
+
+export function findClashAPIConfigIndex(arr: ClashAPIConfig[], needle: ClashAPIConfig) {
   for (let i = 0; i < arr.length; i++) {
     const x = arr[i];
-    if (x.baseURL === baseURL && x.secret === secret && x.metaLabel === metaLabel) return i;
+    if (
+      x.baseURL === needle.baseURL &&
+      x.secret === needle.secret &&
+      x.metaLabel === needle.metaLabel
+    ) {
+      return i;
+    }
   }
 }
-
-export function addClashAPIConfig(conf: ClashAPIConfig) {
-  return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, conf);
-    // already exists
-    if (idx) return;
-
-    const clashAPIConfig = { ...conf, addedAt: Date.now() };
-    dispatch('addClashAPIConfig', (s) => {
-      s.app.clashAPIConfigs.push(clashAPIConfig);
-    });
-    // side effect
-    saveState(getState().app);
-  };
-}
-
-export function removeClashAPIConfig(conf: ClashAPIConfig) {
-  return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, conf);
-    dispatch('removeClashAPIConfig', (s) => {
-      s.app.clashAPIConfigs.splice(idx, 1);
-      if (idx === s.app.selectedClashAPIConfigIndex) {
-        s.app.selectedClashAPIConfigIndex = 0;
-      } else if (idx < s.app.selectedClashAPIConfigIndex) {
-        s.app.selectedClashAPIConfigIndex -= 1;
-      }
-    });
-    // side effect
-    saveState(getState().app);
-  };
-}
-
-export function selectClashAPIConfig(conf: ClashAPIConfig) {
-  return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const idx = findClashAPIConfigIndex(getState, conf);
-    const curr = getSelectedClashAPIConfigIndex(getState());
-    if (curr !== idx) {
-      dispatch('selectClashAPIConfig', (s) => {
-        s.app.selectedClashAPIConfigIndex = idx;
-      });
-    }
-    // side effect
-    saveState(getState().app);
-
-    // manual clean up is too complex
-    // we just reload the app
-    try {
-      window.location.reload();
-    } catch (err) {
-      // ignore
-    }
-  };
-}
-
-// unused
-export function updateClashAPIConfig(conf: ClashAPIConfig) {
-  return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const clashAPIConfig = conf;
-    dispatch('appUpdateClashAPIConfig', (s) => {
-      s.app.clashAPIConfigs[0] = clashAPIConfig;
-    });
-    // side effect
-    saveState(getState().app);
-    dispatch(closeModal('apiConfig'));
-    dispatch(fetchConfigs(clashAPIConfig));
-  };
-}
-
-const rootEl = document.querySelector('html');
-type ThemeType = 'dark' | 'light' | 'auto';
 
 function insertThemeColorMeta(color: string, media?: string) {
   const meta0 = document.createElement('meta');
@@ -150,7 +117,7 @@ function updateMetaThemeColor(theme: ThemeType) {
   }
 }
 
-function setTheme(theme: ThemeType = 'dark') {
+export function setTheme(theme: ThemeType = 'dark') {
   if (theme === 'auto') {
     rootEl.setAttribute('data-theme', 'auto');
   } else if (theme === 'dark') {
@@ -160,76 +127,6 @@ function setTheme(theme: ThemeType = 'dark') {
   }
   updateMetaThemeColor(theme);
 }
-
-export function switchTheme(nextTheme = 'auto') {
-  return (dispatch: DispatchFn, getState: GetStateFn) => {
-    const currentTheme = getTheme(getState());
-    if (currentTheme === nextTheme) return;
-    // side effect
-    setTheme(nextTheme as ThemeType);
-    dispatch('storeSwitchTheme', (s) => {
-      s.app.theme = nextTheme;
-    });
-    // side effect
-    saveState(getState().app);
-  };
-}
-
-export function selectChartStyleIndex(selectedChartStyleIndex: number | string) {
-  return (dispatch: DispatchFn, getState: GetStateFn) => {
-    dispatch('appSelectChartStyleIndex', (s) => {
-      s.app.selectedChartStyleIndex = Number(selectedChartStyleIndex);
-    });
-    // side effect
-    saveState(getState().app);
-  };
-}
-
-export function updateAppConfig(name: string, value: unknown) {
-  return (dispatch: DispatchFn, getState: GetStateFn) => {
-    dispatch('appUpdateAppConfig', (s) => {
-      s.app[name] = value;
-    });
-    // side effect
-    saveState(getState().app);
-  };
-}
-
-export function updateCollapsibleIsOpen(prefix: string, name: string, v: boolean) {
-  return (dispatch: DispatchFn, getState: GetStateFn) => {
-    dispatch('updateCollapsibleIsOpen', (s: State) => {
-      s.app.collapsibleIsOpen[`${prefix}:${name}`] = v;
-    });
-    // side effect
-    saveStateDebounced(getState().app);
-  };
-}
-
-const defaultClashAPIConfig = {
-  baseURL: document.getElementById('app')?.getAttribute('data-base-url') ?? 'http://127.0.0.1:9090',
-  secret: '',
-  addedAt: 0,
-};
-// type Theme = 'light' | 'dark';
-const defaultState: StateApp = {
-  selectedClashAPIConfigIndex: 0,
-  clashAPIConfigs: [defaultClashAPIConfig],
-
-  latencyTestUrl: 'http://www.gstatic.com/generate_204',
-  selectedChartStyleIndex: 0,
-  theme: 'dark',
-
-  // type { [string]: boolean }
-  collapsibleIsOpen: {},
-  // how proxies are sorted in a group or provider
-  proxySortBy: 'Natural',
-  hideUnavailableProxies: false,
-  autoCloseOldConns: false,
-  logStreamingPaused: false,
-  logLevel: 'info',
-};
-
-const CONFIG_QUERY_PARAMS = ['hostname', 'port', 'secret', 'theme'];
 
 function parseConfigQueryString() {
   const { search } = window.location;
@@ -251,7 +148,9 @@ function parseConfigQueryString() {
   return [collector, sp, shouldUpdateAddressBar] as const;
 }
 
-export function initialState() {
+export function initialState(): StateApp {
+  if (iState) return iState;
+
   let s = loadState();
   s = { ...defaultState, ...s };
   const [query, sp, shouldUpdateAddressBar] = parseConfigQueryString();
@@ -285,10 +184,7 @@ export function initialState() {
   }
   // set initial theme
   setTheme(s.theme);
+
+  iState = s;
   return s;
 }
-
-export const darkModePureBlackToggleAtom = atomWithStorage(
-  STORAGE_KEY.darkModePureBlackToggle,
-  false,
-);

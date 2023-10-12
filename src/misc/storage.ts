@@ -4,7 +4,7 @@ import { StateApp } from '$src/store/types';
 
 const StorageKey = 'yacd.haishan.me';
 
-function loadState() {
+export function loadState() {
   try {
     const serialized = localStorage.getItem(StorageKey);
     if (!serialized) return undefined;
@@ -14,7 +14,7 @@ function loadState() {
   }
 }
 
-function saveState(state: StateApp) {
+export function saveState(state: StateApp) {
   try {
     const serialized = JSON.stringify(state);
     localStorage.setItem(StorageKey, serialized);
@@ -23,12 +23,10 @@ function saveState(state: StateApp) {
   }
 }
 
-function clearState() {
+export function clearState() {
   try {
     localStorage.removeItem(StorageKey);
   } catch (err) {
     // ignore
   }
 }
-
-export { loadState, saveState, clearState };

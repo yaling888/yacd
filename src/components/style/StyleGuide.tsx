@@ -2,12 +2,13 @@ import React, { PureComponent } from 'react';
 import { Zap } from 'react-feather';
 import Loading from 'src/components/Loading';
 
-import Button from './Button';
-import { Toggle } from './form/Toggle';
-import Input from './Input';
-import { ZapAnimated } from './shared/ZapAnimated';
-import SwitchThemed from './SwitchThemed';
-import ToggleSwitch from './ToggleSwitch';
+import Button from '$src/components/Button';
+import { ToggleInput } from '$src/components/form/Toggle';
+import Input from '$src/components/Input';
+import { ZapAnimated } from '$src/components/shared/ZapAnimated';
+import ToggleSwitch from '$src/components/ToggleSwitch';
+
+import { ThemeSwitcher } from '../shared/ThemeSwitcher';
 
 const noop = () => {
   /* empty */
@@ -27,34 +28,24 @@ const Pane = ({ children, style }: { children: React.ReactNode; style?: React.CS
   <div style={{ ...paneStyle, ...style }}>{children}</div>
 );
 
-function useToggle(initialState = false) {
-  const [onoff, setonoff] = React.useState(initialState);
-  const handleChange = React.useCallback(() => {
-    setonoff((x) => !x);
-  }, []);
-  return [onoff, handleChange];
-}
-
-function SwitchExample() {
-  const [checked, handleChange] = useToggle(false);
-  return <SwitchThemed checked={checked} onChange={handleChange} />;
-}
-
-class StyleGuide extends PureComponent {
+export default class StyleGuide extends PureComponent {
   render() {
     return (
       <div>
         <Pane>
-          <Toggle id="toggle1" label="Toggle Me" />
+          <ThemeSwitcher />
+        </Pane>
+        <Pane>
+          <ToggleInput id="t0" />
+          <label htmlFor="t0" style={{ paddingLeft: 12 }}>
+            Toggle Me
+          </label>
         </Pane>
         <Pane>
           <input />
         </Pane>
         <Pane>
           <ZapAnimated />
-        </Pane>
-        <Pane>
-          <SwitchExample />
         </Pane>
         <Pane>
           <Input />
@@ -75,5 +66,3 @@ class StyleGuide extends PureComponent {
     );
   }
 }
-
-export default StyleGuide;

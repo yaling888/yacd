@@ -3,12 +3,11 @@
   --width: 44px;
   --knob-size: 24px;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
   cursor: pointer;
-  padding-left: var(--width);
   position: relative;
+  width: var(--width);
   height: var(--height);
 
   .input {
@@ -47,7 +46,6 @@
       background-color 0.15s;
     background: var(--bg-toggle-track);
     border-radius: 100px;
-    border-width: 1px;
     &:before {
       position: absolute;
       content: '';

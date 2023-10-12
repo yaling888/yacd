@@ -1,39 +1,36 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import * as React from 'react';
 import { DownloadCloud, LogOut, RotateCw, Trash2 } from 'react-feather';
 import { useTranslation } from 'react-i18next';
-import { closeAllConnections } from "src/api/connections";
-import Select from 'src/components/shared/Select';
-import { ClashGeneralConfig, DispatchFn, State } from 'src/store/types';
-import { ClashAPIConfig } from 'src/types';
+import { useNavigate } from 'react-router-dom';
 
 import {
-  darkModePureBlackToggleAtom,
-  getClashAPIConfig,
-  getLatencyTestUrl,
-  getSelectedChartStyleIndex,
-} from '../store/app';
-import {
-  fetchConfigs,
   flushFakeIPPool,
-  getConfigs,
   reloadConfigFile,
   updateConfigs,
   updateGeoDatabasesFile,
-} from '../store/configs';
-import { openModal } from '../store/modals';
+} from '$src/api/configs';
+import { closeAllConnections } from '$src/api/connections';
+import Select from '$src/components/shared/Select';
+import {
+  darkModePureBlackToggleAtom,
+  latencyTestUrlAtom,
+  selectedChartStyleIndexAtom,
+  useApiConfig,
+} from '$src/store/app';
+import { useClashConfig } from '$src/store/configs';
+import { ClashGeneralConfig } from '$src/store/types';
+
 import Button from './Button';
 import s0 from './Config.module.scss';
-import ContentHeader from './ContentHeader';
-import { Toggle } from './form/Toggle';
+import { ContentHeader } from './ContentHeader';
+import { ToggleInput } from './form/Toggle';
 import Input, { SelfControlledInput } from './Input';
 import { Selection2 } from './Selection';
-import { connect, useStoreActions } from './StateProvider';
-import Switch from './SwitchThemed';
 import TrafficChartSample from './TrafficChartSample';
-// import ToggleSwitch from './ToggleSwitch';
 
-const { useEffect, useState, useCallback, useRef } = React;
+const { useEffect, useState, useCallback, useRef, useMemo } = React;
 
 const propsList = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }];
 
@@ -70,50 +67,22 @@ const tunStackOptions = [
   ['System', 'System'],
 ];
 
-const mapState = (s: State) => ({
-  configs: getConfigs(s),
-  apiConfig: getClashAPIConfig(s),
-});
-
-const mapState2 = (s: State) => ({
-  selectedChartStyleIndex: getSelectedChartStyleIndex(s),
-  latencyTestUrl: getLatencyTestUrl(s),
-  apiConfig: getClashAPIConfig(s),
-});
-
-const Config = connect(mapState2)(ConfigImpl);
-export default connect(mapState)(ConfigContainer);
-
-function ConfigContainer({
-  dispatch,
-  configs,
-  apiConfig,
-}: {
-  dispatch: DispatchFn;
-  configs: ClashGeneralConfig;
-  apiConfig: ClashAPIConfig;
-}) {
-  useEffect(() => {
-    dispatch(fetchConfigs(apiConfig));
-  }, [dispatch, apiConfig]);
-  return <Config configs={configs} />;
+export default function ConfigContainer() {
+  const { data } = useClashConfig();
+  return <Config configs={data} />;
 }
 
 type ConfigImplProps = {
-  dispatch: DispatchFn;
   configs: ClashGeneralConfig;
-  selectedChartStyleIndex: number;
-  latencyTestUrl: string;
-  apiConfig: ClashAPIConfig;
 };
 
-function ConfigImpl({
-  dispatch,
-  configs,
-  selectedChartStyleIndex,
-  latencyTestUrl,
-  apiConfig,
-}: ConfigImplProps) {
+function Config({ configs }: ConfigImplProps) {
+  const navigate = useNavigate();
+  const [latencyTestUrl, setLatencyTestUrl] = useAtom(latencyTestUrlAtom);
+  const [selectedChartStyleIndex, setSelectedChartStyleIndex] = useAtom(
+    selectedChartStyleIndexAtom
+  );
+  const apiConfig = useApiConfig();
   const [configState, setConfigStateInternal] = useState(configs);
   const refConfigs = useRef(configs);
   useEffect(() => {
@@ -122,11 +91,6 @@ function ConfigImpl({
     }
     refConfigs.current = configs;
   }, [configs]);
-
-  const openAPIConfigModal = useCallback(() => {
-    dispatch(openModal('apiConfig'));
-  }, [dispatch]);
-
   const setConfigState = useCallback(
     (name: keyof ClashGeneralConfig, val: ClashGeneralConfig[keyof ClashGeneralConfig]) => {
       setConfigStateInternal({ ...configState, [name]: val });
@@ -134,12 +98,22 @@ function ConfigImpl({
     [configState],
   );
 
-  const setTunConfigState = useCallback(
-    (name, val) => {
-      const tun = {...configState.tun, [name]: val };
-      setConfigStateInternal({ ...configState, tun: {...tun}});
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: updateConfigs(apiConfig),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/configs'] });
     },
-    [configState],
+  });
+
+  const handleSwitchOnChange = useCallback(
+    (checked: boolean) => {
+      const name = 'allow-lan';
+      const value = checked;
+      setConfigState(name, value);
+      mutation.mutate({ 'allow-lan': value });
+    },
+    [mutation, setConfigState],
   );
 
   const handleChangeValue = useCallback(
@@ -150,7 +124,7 @@ function ConfigImpl({
         case 'allow-lan':
         case 'sniffing':
           setConfigState(name, value);
-          dispatch(updateConfigs(apiConfig, { [name]: value }));
+          mutation.mutate({ [name]: value });
           break;
         case 'mitm-port':
         case 'redir-port':
@@ -165,24 +139,24 @@ function ConfigImpl({
           break;
         case 'enable':
         case 'stack':
-          setTunConfigState(name, value);
-          dispatch(updateConfigs(apiConfig, { 'tun': { [name]: value }})).then(() => {
+          const tun = { ...configState.tun, [name]: value };
+          setConfigState('tun', tun);
+          mutation.mutate({ ['tun']: tun });
+          if (mutation.isSuccess) {
             closeAllConnections(apiConfig);
-          });
+          }
           break;
         default:
           return;
       }
     },
-    [apiConfig, dispatch, setConfigState, setTunConfigState],
+    [configState.tun, mutation, setConfigState],
   );
 
   const handleInputOnChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
     (e) => handleChangeValue(e.target),
     [handleChangeValue],
   );
-
-  const { selectChartStyleIndex, updateAppConfig } = useStoreActions();
 
   const handleInputOnBlur = useCallback<React.FocusEventHandler<HTMLInputElement>>(
     (e) => {
@@ -196,31 +170,45 @@ function ConfigImpl({
         case 'mitm-port': {
           const num = parseInt(value, 10);
           if (num < 0 || num > 65535) return;
-          dispatch(updateConfigs(apiConfig, { [name]: num }));
+          mutation.mutate({ [name]: num });
           break;
         }
         case 'latencyTestUrl': {
-          updateAppConfig(name, value);
+          setLatencyTestUrl(value);
           break;
         }
         default:
           throw new Error(`unknown input name ${name}`);
       }
     },
-    [apiConfig, dispatch, updateAppConfig],
+    [mutation, setLatencyTestUrl],
   );
 
-  const handleReloadConfigFile = useCallback(() => {
-    dispatch(reloadConfigFile(apiConfig));
-  },[apiConfig, dispatch]);
+  const reloadMutation = useMutation({
+    mutationFn: reloadConfigFile(apiConfig),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/configs'] });
+    },
+  });
 
-  const handleUpdateGeoDatabasesFile = useCallback(() => {
-    dispatch(updateGeoDatabasesFile(apiConfig));
-  },[apiConfig, dispatch]);
+  const geoMutation = useMutation({
+    mutationFn: updateGeoDatabasesFile(apiConfig),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/configs'] });
+    },
+  });
 
-  const handleFlushFakeIPPool = useCallback(() => {
-    dispatch(flushFakeIPPool(apiConfig));
-  },[apiConfig, dispatch]);
+  const fakeIPMutation = useMutation({
+    mutationFn: flushFakeIPPool(apiConfig),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/configs'] });
+    },
+  });
+
+  const mode = useMemo(() => {
+    const m = configState.mode;
+    return typeof m === 'string' && m[0].toUpperCase() + m.slice(1);
+  }, [configState.mode]);
 
   const [pureBlack, setPureBlack] = useAtom(darkModePureBlackToggleAtom);
 
@@ -249,8 +237,8 @@ function ConfigImpl({
           <div className={s0.label}>Mode</div>
           <Select
             options={modeOptions}
-            selected={configState['mode']}
-            onChange={(e) =>  handleChangeValue({ name: 'mode', value: e.target.value })}
+            selected={mode}
+            onChange={(e) => handleChangeValue({ name: 'mode', value: e.target.value })}
           />
         </div>
 
@@ -263,58 +251,30 @@ function ConfigImpl({
           />
         </div>
 
-        <div>
-          <div className={s0.label}>{t('allow_lan')}</div>
-          <div className={s0.wrapSwitch}>
-            <Switch
-              name="allow-lan"
-              checked={configState['allow-lan']}
-              onChange={(value: boolean) =>
-                handleChangeValue({ name: 'allow-lan', value: value })
-              }
-            />
-          </div>
+        <div className={s0.item}>
+          <ToggleInput
+            id="config-allow-lan"
+            checked={configState['allow-lan']}
+            onChange={handleSwitchOnChange}
+          />
+          <label htmlFor="config-allow-lan">{t('allow_lan')}</label>
         </div>
 
-        <div>
-          <div className={s0.label}>{t('tls_sniffing')}</div>
-          <div className={s0.wrapSwitch}>
-            <Switch
-                name="sniffing"
-                checked={configState['sniffing']}
-                onChange={(value: boolean) =>
-                  handleChangeValue({ name: 'sniffing', value: value })
-                }
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className={s0.sep}>
-        <div />
-      </div>
-
-      <div className={s0.section}>
-        <div>
-          <div className={s0.label}>{t('enable_tun_device')}</div>
-          <div className={s0.wrapSwitch}>
-            <Switch
-                checked={configState['tun']['enable']}
-                onChange={(value: boolean) =>
-                    handleChangeValue({ name: 'enable', value: value })
-                }
-            />
-          </div>
+        <div className={s0.item}>
+          <ToggleInput
+            id="config-sniffing"
+            checked={configState['sniffing']}
+            onChange={handleSwitchOnChange}
+          />
+          <label htmlFor="config-sniffing">{t('tls_sniffing')}</label>
         </div>
 
         <div>
           <div className={s0.label}>TUN IP Stack</div>
           <Select
-              options={tunStackOptions}
-              selected={configState['tun']['stack']}
-              onChange={(e) =>
-                  handleChangeValue({ name: 'stack', value: e.target.value })
-              }
+            options={tunStackOptions}
+            selected={configState['tun']['stack']}
+            onChange={(e) => handleChangeValue({ name: 'stack', value: e.target.value })}
           />
         </div>
       </div>
@@ -327,27 +287,27 @@ function ConfigImpl({
         <div>
           <div className={s0.label}>Reload</div>
           <Button
-              start={<RotateCw size={16} />}
-              label={t('reload_config_file')}
-              onClick={handleReloadConfigFile}
+            start={<RotateCw size={16} />}
+            label={t('reload_config_file')}
+            onClick={() => reloadMutation.mutate()}
           />
         </div>
 
         <div>
           <div className={s0.label}>GEO Databases</div>
           <Button
-              start={<DownloadCloud size={16} />}
-              label={t('update_geo_databases_file')}
-              onClick={handleUpdateGeoDatabasesFile}
+            start={<DownloadCloud size={16} />}
+            label={t('update_geo_databases_file')}
+            onClick={() => geoMutation.mutate()}
           />
         </div>
 
         <div>
           <div className={s0.label}>FakeIP</div>
           <Button
-              start={<Trash2 size={16} />}
-              label={t('flush_fake_ip_pool')}
-              onClick={handleFlushFakeIPPool}
+            start={<Trash2 size={16} />}
+            label={t('flush_fake_ip_pool')}
+            onClick={() => fakeIPMutation.mutate()}
           />
         </div>
       </div>
@@ -383,7 +343,7 @@ function ConfigImpl({
             OptionComponent={TrafficChartSample}
             optionPropsList={propsList}
             selectedIndex={selectedChartStyleIndex}
-            onChange={selectChartStyleIndex}
+            onChange={(v: string) => setSelectedChartStyleIndex(parseInt(v, 10))}
           />
         </div>
         <div>
@@ -395,16 +355,18 @@ function ConfigImpl({
           <Button
             start={<LogOut size={16} />}
             label={t('switch_backend')}
-            onClick={openAPIConfigModal}
+            onClick={() => navigate('/backend')}
           />
         </div>
         <div className={s0.item}>
-          <Toggle
-            label={t('dark_mode_pure_black_toggle_label')}
+          <ToggleInput
             id="dark-mode-pure-black-toggle"
             checked={pureBlack}
-            onChange={(e) => setPureBlack(e.target.checked)}
+            onChange={setPureBlack}
           />
+          <label htmlFor="dark-mode-pure-black-toggle">
+            {t('dark_mode_pure_black_toggle_label')}
+          </label>
         </div>
       </div>
     </div>

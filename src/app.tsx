@@ -1,4 +1,4 @@
-import 'modern-normalize/modern-normalize.css';
+// import 'modern-normalize/modern-normalize.css';
 import './misc/i18n';
 import '@fontsource/roboto-mono/latin-400.css';
 import '@fontsource/inter/latin-400.css';
@@ -25,6 +25,7 @@ function insertLinkElement(href: string) {
   l.href = href;
   l.rel = 'preload';
   l.as = 'font';
+  l.type = 'font/woff2';
   l.crossOrigin = '';
 
   document.head.appendChild(l);
