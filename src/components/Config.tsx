@@ -56,10 +56,10 @@ const langOptions = [
 ];
 
 const modeOptions = [
-  ['direct', 'Direct'],
-  ['rule', 'Rule'],
-  ['script', 'Script'],
-  ['global', 'Global'],
+  ['Direct', 'Direct'],
+  ['Rule', 'Rule'],
+  ['Script', 'Script'],
+  ['Global', 'Global'],
 ];
 
 const tunStackOptions = [
@@ -101,7 +101,10 @@ function Config({ configs }: ConfigImplProps) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: updateConfigs(apiConfig),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      if (variables.tun) {
+        closeAllConnections(apiConfig);
+      }
       queryClient.invalidateQueries({ queryKey: ['/configs'] });
     },
   });
@@ -139,12 +142,8 @@ function Config({ configs }: ConfigImplProps) {
           break;
         case 'enable':
         case 'stack':
-          const tun = { ...configState.tun, [name]: value };
-          setConfigState('tun', tun);
-          mutation.mutate({ ['tun']: tun });
-          if (mutation.isSuccess) {
-            closeAllConnections(apiConfig);
-          }
+          setConfigState('tun', { ...configState.tun, [name]: value });
+          mutation.mutate({ ['tun']: { [name]: value } });
           break;
         default:
           return;
@@ -264,9 +263,24 @@ function Config({ configs }: ConfigImplProps) {
           <ToggleInput
             id="config-sniffing"
             checked={configState['sniffing']}
-            onChange={handleSwitchOnChange}
+            onChange={(value: boolean) => handleChangeValue({ name: 'sniffing', value: value })}
           />
           <label htmlFor="config-sniffing">{t('tls_sniffing')}</label>
+        </div>
+      </div>
+
+      <div className={s0.sep}>
+        <div />
+      </div>
+
+      <div className={s0.section}>
+        <div className={s0.item}>
+          <ToggleInput
+            id="config-tun-enable"
+            checked={configState['tun']['enable']}
+            onChange={(value: boolean) => handleChangeValue({ name: 'enable', value: value })}
+          />
+          <label htmlFor="config-tun-enable">{t('enable_tun_device')}</label>
         </div>
 
         <div>

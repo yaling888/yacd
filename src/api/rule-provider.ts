@@ -1,7 +1,7 @@
 import { getURLAndInit } from 'src/misc/request-helper';
 import { ClashAPIConfig } from 'src/types';
 
-import { query, QueryCtx } from './fetch';
+// import { query, QueryCtx } from './fetch';
 
 export type RuleProvider = RuleProviderAPIItem & { idx: number };
 
@@ -33,8 +33,10 @@ function normalizeAPIResponse(data: RuleProviderAPIData) {
   return { byName, names };
 }
 
-export async function fetchRuleProviders(ctx: QueryCtx) {
-  const data = (await query(ctx)) || { providers: {} };
+export async function fetchRuleProviders() {
+// export async function fetchRuleProviders(ctx: QueryCtx) {
+  // const data = (await query(ctx)) || { providers: {} };
+  const data = { providers: {} };
   return normalizeAPIResponse(data);
 }
 

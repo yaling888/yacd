@@ -96,8 +96,6 @@ export type StateProxies = {
 
   showModalClosePrevConns: boolean;
   switchProxyCtx?: SwitchProxyCtx;
-
-  isPlusPro: boolean;
 };
 
 ///// store.logs

@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
 import { atom } from 'jotai';
-import { fetchVersion } from 'src/api/version';
 import {
   DelayMapping,
   DispatchFn,
@@ -24,7 +22,6 @@ export const initialState: StateProxies = {
   delay: {},
   groupNames: [],
   showModalClosePrevConns: false,
-  isPlusPro: false,
 };
 
 const noop = () => null;
@@ -53,7 +50,6 @@ export const getProxyGroupNames = (s: State) => s.proxies.groupNames;
 export const getProxyProviders = (s: State) => s.proxies.proxyProviders || [];
 export const getDangleProxyNames = (s: State) => s.proxies.dangleProxyNames;
 export const getShowModalClosePrevConns = (s: State) => s.proxies.showModalClosePrevConns;
-export const isClashPlusPro = (s: State) => s.proxies.isPlusPro;
 
 function mapLatency(names: string[], getProxy: (name: string) => { history: LatencyHistory }) {
   const result: DelayMapping = {};
@@ -322,9 +318,9 @@ export function requestDelayForProxies(
   apiConfig: ClashAPIConfig,
   names: string[],
   latencyTestUrl: string,
+  isPlusPro: boolean,
 ) {
   return async (dispatch: DispatchFn, getState: GetStateFn) => {
-    const isPlusPro = isClashPlusPro(getState());
     const proxyDedupMap = new Map<string, boolean>();
 
     if (isPlusPro) {
@@ -379,16 +375,6 @@ export function requestDelayAll(apiConfig: ClashAPIConfig, latencyTestUrl: strin
       await healthcheckProviderByNameInternal(apiConfig, p.name);
     }
     await dispatch(fetchProxies(apiConfig));
-  };
-}
-
-export function fetchClashVersion(apiConfig: ClashAPIConfig) {
-  return async (dispatch: DispatchFn) => {
-    const { data: clashVersion } = useQuery(['/version', apiConfig], fetchVersion);
-    const isPlusPro = clashVersion.version && clashVersion.version.indexOf('PlusPro') > -1;
-    dispatch('updateIsPlusPro', (s: State) => {
-      s.proxies.isPlusPro = isPlusPro;
-    });
   };
 }
 

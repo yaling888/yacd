@@ -9,6 +9,7 @@ import {
   collapsibleIsOpenAtom,
   hideUnavailableProxiesAtom,
   latencyTestUrlAtom,
+  logLevelAtom,
   logStreamingPausedAtom,
   proxySortByAtom,
   selectedChartStyleIndexAtom,
@@ -36,6 +37,7 @@ export function AppConfigSideEffect() {
   const [hideUnavailableProxies] = useAtom(hideUnavailableProxiesAtom);
   const [autoCloseOldConns] = useAtom(autoCloseOldConnsAtom);
   const [logStreamingPaused] = useAtom(logStreamingPausedAtom);
+  const [logLevel] = useAtom(logLevelAtom);
   useEffect(() => {
     stateRef = {
       autoCloseOldConns,
@@ -43,6 +45,7 @@ export function AppConfigSideEffect() {
       collapsibleIsOpen,
       hideUnavailableProxies,
       latencyTestUrl,
+      logLevel,
       logStreamingPaused,
       proxySortBy,
       selectedChartStyleIndex,
@@ -56,6 +59,7 @@ export function AppConfigSideEffect() {
     collapsibleIsOpen,
     hideUnavailableProxies,
     latencyTestUrl,
+    logLevel,
     logStreamingPaused,
     proxySortBy,
     selectedChartStyleIndex,

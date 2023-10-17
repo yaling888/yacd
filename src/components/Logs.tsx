@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Pause, Play } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { areEqual, FixedSizeList as List, ListChildComponentProps } from 'react-window';
-// import { fetchLogs, reconnect as reconnectLogs, stop as stopLogs } from 'src/api/logs';
 import { fetchLogs, stop as stopLogs } from 'src/api/logs';
 import { ContentHeader } from 'src/components/ContentHeader';
 import LogSearch from 'src/components/LogSearch';
@@ -73,15 +72,11 @@ function Logs({ dispatch, logs }: { dispatch: DispatchFn; logs: Log[] }) {
   const [logStreamingPaused, setLogStreamingPaused] = useAtom(logStreamingPausedAtom);
   const apiConfig = useApiConfig();
   const toggleIsRefreshPaused = useCallback(() => {
-    // logStreamingPaused ? reconnectLogs({ ...apiConfig, logLevel }) : stopLogs();
-    // being lazy here
-    // ideally we should check the result of previous operation before updating this
     if (refFetch.current === 1) {
       refFetch.current = 0;
       stopLogs();
     }
     setLogStreamingPaused(!logStreamingPaused);
-    // }, [apiConfig, logLevel, logStreamingPaused, setLogStreamingPaused]);
   }, [logStreamingPaused, setLogStreamingPaused]);
 
   const onChangeLogLevel = useCallback(

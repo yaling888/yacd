@@ -11,8 +11,10 @@ import {
   autoCloseOldConnsAtom,
   collapsibleIsOpenAtom,
   hideUnavailableProxiesAtom,
+  latencyTestUrlAtom,
   proxySortByAtom,
 } from '$src/store/app';
+import { useClashVersion } from '$src/store/configs';
 import { getProxies, switchProxy } from '$src/store/proxies';
 import { DelayMapping, DispatchFn, ProxiesMapping, State } from '$src/store/types';
 import { ClashAPIConfig } from '$src/types';
@@ -71,15 +73,17 @@ function ProxyGroupImpl({
     [apiConfig, dispatch, name, isSelectable, autoCloseOldConns],
   );
 
+  const [latencyTestUrl] = useAtom(latencyTestUrlAtom);
+  const version = useClashVersion();
   const testingLatency = useState2(false);
   const testLatency = useCallback(async () => {
     if (testingLatency.value) return;
     testingLatency.set(true);
     try {
-      await requestDelayForProxies(apiConfig, all);
+      await requestDelayForProxies(apiConfig, all, latencyTestUrl, version.plus_pro);
     } catch (err) {}
     testingLatency.set(false);
-  }, [all, apiConfig, requestDelayForProxies, testingLatency]);
+  }, [all, apiConfig, requestDelayForProxies, testingLatency, latencyTestUrl, version.plus_pro]);
 
   return (
     <div className={s0.group}>
