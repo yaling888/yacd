@@ -18,6 +18,7 @@ export function ProxyProviderList({ items }: { items: FormattedProxyProvider[] }
             type={item.type}
             vehicleType={item.vehicleType}
             updatedAt={item.updatedAt}
+            subscription={item.subscription}
           />
         ))}
       </div>

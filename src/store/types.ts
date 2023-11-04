@@ -73,12 +73,21 @@ export type ProxyDelayItem =
 export type ProxiesMapping = Record<string, ProxyItem>;
 export type DelayMapping = Record<string, ProxyDelayItem>;
 
+export type Subscription = {
+  upload: number;
+  download: number;
+  total: number;
+  expire: number;
+}
+
 export type ProxyProvider = {
   name: string;
   type: 'Proxy';
   updatedAt: string;
   vehicleType: 'HTTP' | 'File' | 'Compatible';
   proxies: ProxyItem[];
+
+  subscription?: Subscription;
 };
 
 export type FormattedProxyProvider = Omit<ProxyProvider, 'proxies'> & { proxies: string[] };

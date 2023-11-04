@@ -1,5 +1,5 @@
 import { Tooltip } from '@reach/tooltip';
-import { formatDistance } from 'date-fns';
+import { formatDistance, format } from 'date-fns';
 import { useAtom } from 'jotai';
 import * as React from 'react';
 import { RotateCw } from 'react-feather';
@@ -15,10 +15,11 @@ import {
   useApiConfig,
 } from 'src/store/app';
 import { getDelay, healthcheckProviderByName } from 'src/store/proxies';
-import { DelayMapping, State } from 'src/store/types';
+import { DelayMapping, State, Subscription } from 'src/store/types';
 
 import { ZapAnimated } from '$src/components/shared/ZapAnimated';
 import { useState2 } from '$src/hooks/basic';
+import prettyBytes from '$src/misc/pretty-bytes';
 
 import { useFilteredAndSorted } from './hooks';
 import { ProxyList, ProxyListSummaryView } from './ProxyList';
@@ -33,10 +34,19 @@ type Props = {
   type: 'Proxy' | 'Rule';
   vehicleType: 'HTTP' | 'File' | 'Compatible';
   updatedAt?: string;
+  subscription?: Subscription;
   dispatch: (x: any) => Promise<any>;
 };
 
-function ProxyProviderImpl({ name, proxies: all, delay, vehicleType, updatedAt, dispatch }: Props) {
+function ProxyProviderImpl({
+  name,
+  proxies: all,
+  delay,
+  vehicleType,
+  updatedAt,
+  subscription,
+  dispatch,
+}: Props) {
   const [collapsibleIsOpen, setCollapsibleIsOpen] = useAtom(collapsibleIsOpenAtom);
   const isOpen = collapsibleIsOpen[`proxyProvider:${name}`];
   const [proxySortBy] = useAtom(proxySortByAtom);
@@ -62,6 +72,11 @@ function ProxyProviderImpl({ name, proxies: all, delay, vehicleType, updatedAt, 
   }, [isOpen, updateCollapsibleIsOpen, name]);
 
   const timeAgo = formatDistance(new Date(updatedAt), new Date());
+
+  const total = subscription?.total;
+  const expire = subscription?.expire;
+  const expireDay = expire && expire > 0 ? format(expire * 1000, 'yyyy-MM-dd') : '';
+
   return (
     <div className={s.main}>
       <div className={s.head}>
@@ -88,6 +103,12 @@ function ProxyProviderImpl({ name, proxies: all, delay, vehicleType, updatedAt, 
       </div>
       <div className={s.updatedAt}>
         <small>Updated {timeAgo} ago</small>
+        {total && total > 0 ? (
+          <small>
+            {prettyBytes(subscription?.upload + subscription?.download)} / {prettyBytes(total)}{' '}
+            {expireDay}
+          </small>
+        ) : null}
       </div>
       {isOpen ? <ProxyList all={proxies} /> : <ProxyListSummaryView all={proxies} />}
     </div>
