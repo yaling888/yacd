@@ -65,14 +65,14 @@ export function BackendList() {
         return;
       }
       if (currIdx === idx) {
-        navigate('/', { replace: true });
+        navigate('./', { replace: true });
       } else {
         setCurrIdx(idx);
         await sleep(32);
         // manual clean up is too complex
         // we just reload the app
         try {
-          window.location.href = '/';
+          window.location.href = './';
         } catch (err) {
           // ignore
         }
