@@ -65,7 +65,7 @@ export function BackendList() {
         return;
       }
       if (currIdx === idx) {
-        navigate('./', { replace: true });
+        navigate('/', { replace: true });
       } else {
         setCurrIdx(idx);
         await sleep(32);
