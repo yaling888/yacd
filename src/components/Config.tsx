@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import * as React from 'react';
-import { DownloadCloud, LogOut, RotateCw, Trash2 } from 'react-feather';
+import { DownloadCloud, LogOut, RotateCw, Shield, Trash2 } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -142,14 +142,14 @@ function Config({ configs }: ConfigImplProps) {
           break;
         case 'enable':
         case 'stack':
-          setConfigState('tun', { ...configState.tun, [name]: value });
+          setConfigState('tun', { ...refConfigs.current['tun'], [name]: value });
           mutation.mutate({ ['tun']: { [name]: value } });
           break;
         default:
           return;
       }
     },
-    [configState.tun, mutation, setConfigState],
+    [mutation, setConfigState],
   );
 
   const handleInputOnChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
@@ -231,7 +231,13 @@ function Config({ configs }: ConfigImplProps) {
             </div>
           ) : null,
         )}
+      </div>
 
+      <div className={s0.sep}>
+        <div />
+      </div>
+
+      <div className={s0.section}>
         <div>
           <div className={s0.label}>Mode</div>
           <Select
@@ -249,24 +255,6 @@ function Config({ configs }: ConfigImplProps) {
             onChange={(e) => handleChangeValue({ name: 'log-level', value: e.target.value })}
           />
         </div>
-
-        <div className={s0.item}>
-          <ToggleInput
-            id="config-allow-lan"
-            checked={configState['allow-lan']}
-            onChange={handleSwitchOnChange}
-          />
-          <label htmlFor="config-allow-lan">{t('allow_lan')}</label>
-        </div>
-
-        <div className={s0.item}>
-          <ToggleInput
-            id="config-sniffing"
-            checked={configState['sniffing']}
-            onChange={(value: boolean) => handleChangeValue({ name: 'sniffing', value: value })}
-          />
-          <label htmlFor="config-sniffing">{t('tls_sniffing')}</label>
-        </div>
       </div>
 
       <div className={s0.sep}>
@@ -276,22 +264,51 @@ function Config({ configs }: ConfigImplProps) {
       <div className={s0.section}>
         <div className={s0.item}>
           <ToggleInput
-            id="config-tun-enable"
-            checked={configState['tun']['enable']}
-            onChange={(value: boolean) => handleChangeValue({ name: 'enable', value: value })}
+            id="config-allow-lan"
+            checked={configState['allow-lan']}
+            onChange={handleSwitchOnChange}
           />
-          <label htmlFor="config-tun-enable">{t('enable_tun_device')}</label>
+          <label htmlFor="config-allow-lan">{t('allow_lan')}</label>
         </div>
 
-        <div>
-          <div className={s0.label}>TUN IP Stack</div>
-          <Select
-            options={tunStackOptions}
-            selected={configState['tun']['stack']}
-            onChange={(e) => handleChangeValue({ name: 'stack', value: e.target.value })}
-          />
-        </div>
+        {configState['tun'] !== undefined ? (
+          <div className={s0.item}>
+            <ToggleInput
+              id="config-sniffing"
+              checked={configState['sniffing']}
+              onChange={(value: boolean) => handleChangeValue({ name: 'sniffing', value: value })}
+            />
+            <label htmlFor="config-sniffing">{t('tls_sniffing')}</label>
+          </div>
+        ) : null}
       </div>
+
+      {configState['tun'] !== undefined ? (
+        <>
+          <div className={s0.sep}>
+            <div />
+          </div>
+          <div className={s0.section}>
+            <div className={s0.item}>
+              <ToggleInput
+                id="config-tun-enable"
+                checked={configState.tun?.enable}
+                onChange={(value: boolean) => handleChangeValue({ name: 'enable', value: value })}
+              />
+              <label htmlFor="config-tun-enable">{t('enable_tun_device')}</label>
+            </div>
+
+            <div>
+              <div className={s0.label}>TUN IP Stack</div>
+              <Select
+                options={tunStackOptions}
+                selected={configState.tun?.stack}
+                onChange={(e) => handleChangeValue({ name: 'stack', value: e.target.value })}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
 
       <div className={s0.sep}>
         <div />
@@ -307,23 +324,35 @@ function Config({ configs }: ConfigImplProps) {
           />
         </div>
 
-        <div>
-          <div className={s0.label}>GEO Databases</div>
-          <Button
-            start={<DownloadCloud size={16} />}
-            label={t('update_geo_databases_file')}
-            onClick={() => geoMutation.mutate()}
-          />
-        </div>
+        {configState['tun'] !== undefined ? (
+          <>
+            <div>
+              <div className={s0.label}>GEO Databases</div>
+              <Button
+                start={<DownloadCloud size={16} />}
+                label={t('update_geo_databases_file')}
+                onClick={() => geoMutation.mutate()}
+              />
+            </div>
+            <div>
+              <div className={s0.label}>FakeIP</div>
+              <Button
+                start={<Trash2 size={16} />}
+                label={t('flush_fake_ip_pool')}
+                onClick={() => fakeIPMutation.mutate()}
+              />
+            </div>
 
-        <div>
-          <div className={s0.label}>FakeIP</div>
-          <Button
-            start={<Trash2 size={16} />}
-            label={t('flush_fake_ip_pool')}
-            onClick={() => fakeIPMutation.mutate()}
-          />
-        </div>
+            <div>
+              <div className={s0.label}>MITM</div>
+              <Button
+                start={<Shield size={16} />}
+                label={t('install_certificate')}
+                onClick={() => (window.location.href = 'https://mitm.clash/cert.crt')}
+              />
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className={s0.sep}>
