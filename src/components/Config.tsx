@@ -348,7 +348,8 @@ function Config({ configs }: ConfigImplProps) {
               <Button
                 start={<Shield size={16} />}
                 label={t('install_certificate')}
-                onClick={() => (window.location.href = 'https://mitm.clash/cert.crt')}
+                link="http://mitm.clash/cert.crt"
+                target="_blank"
               />
             </div>
           </>

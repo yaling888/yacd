@@ -20,6 +20,8 @@ type ButtonProps = {
   kind?: 'primary' | 'minimal' | 'circular';
   className?: string;
   title?: string;
+  link?: string;
+  target?: string;
 } & ButtonInternalProps;
 
 function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
@@ -29,6 +31,9 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
     isLoading,
     kind = 'primary',
     className,
+    title,
+    link,
+    target,
     children,
     label,
     text,
@@ -49,26 +54,48 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
     className,
   );
   return (
-    <button
-      className={btnClassName}
-      ref={ref}
-      onClick={internalOnClick}
-      disabled={disabled}
-      {...restProps}
-    >
-      {isLoading ? (
+    <>
+      {link ? (
         <>
-          <span style={{ display: 'inline-flex', opacity: 0 }}>
-            <ButtonInternal {...internalProps} />
-          </span>
-          <span className={s0.loadingContainer}>
-            <LoadingDot />
-          </span>
+          {target ? (
+            <a className={btnClassName} href={link} target={target}>
+              {start ? (
+                <span className={s0.btnStart}>{typeof start === 'function' ? start() : start}</span>
+              ) : null}
+              {title || children || label || text}
+            </a>
+          ) : (
+            <a className={btnClassName} href={link}>
+              {start ? (
+                <span className={s0.btnStart}>{typeof start === 'function' ? start() : start}</span>
+              ) : null}
+              {title || children || label || text}
+            </a>
+          )}
         </>
       ) : (
-        <ButtonInternal {...internalProps} />
+        <button
+          className={btnClassName}
+          ref={ref}
+          onClick={internalOnClick}
+          disabled={disabled}
+          {...restProps}
+        >
+          {isLoading ? (
+            <>
+              <span style={{ display: 'inline-flex', opacity: 0 }}>
+                <ButtonInternal {...internalProps} />
+              </span>
+              <span className={s0.loadingContainer}>
+                <LoadingDot />
+              </span>
+            </>
+          ) : (
+            <ButtonInternal {...internalProps} />
+          )}
+        </button>
       )}
-    </button>
+    </>
   );
 }
 
